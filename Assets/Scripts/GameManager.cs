@@ -8,27 +8,22 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public Material[] PlayerColors;
+    private readonly List<Block>[] playersPositions = new List<Block>[4] { new(), new(), new(), new() };
+    private Material[] PlayerColors;
+    private int CurrentPlayerId = 0;
+
+    [HideInInspector]
     public Material hoverColor;
+    [HideInInspector]
     public Material normalColor;
-    protected readonly List<Block>[] playersPositions = new List<Block>[4] { new(), new(), new(), new() };
-
-    [SerializeField]
-    private int nb_players = 3;
-
-    [SerializeField]
-    private Transform Plane;
-
-    public Vector2Int terrainSize = new();
-
-    public int terrainRay = 5;
-
     [HideInInspector]
     public List<Block> Blocks = new();
 
-    private int CurrentPlayerId = 0;
+    [Range(2, 4)]
+    public int nb_players = 2;
 
-    private GameObject PrefabToSpawn;
+    public Vector2Int terrainSize = new();
+    public int terrainRay = 5;
 
     private void Awake()
     {
@@ -40,10 +35,14 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        PlayerColors = Resources.LoadAll<Material>("Materials/Players");
+        hoverColor = Resources.Load<Material>("Materials/Terrain");
+        normalColor = Resources.Load<Material>("Materials/Block");
+
         GenerateBlocks();
         Draw();
 
-        Plane.localScale = new(terrainSize.x, 1, terrainSize.y);
+        transform.GetChild(2).localScale = new(terrainSize.x, 1, terrainSize.y);
     }
 
     public List<Block> GetPositions() => playersPositions[CurrentPlayerId];
@@ -88,17 +87,17 @@ public class GameManager : MonoBehaviour
                 GenerateRectangle();
                 break;
             case 3:
-                GenerateHexagonNeighbors();
+                GenerateHexagon();
                 break;
             case 4:
-                GeneratePlusNeighbors();
+                GeneratePlus();
                 break;
         }
     }
 
     private void GenerateRectangle()
     {
-        PrefabToSpawn = transform.GetChild(0).gameObject;
+        GameObject PrefabToSpawn = transform.GetChild(0).gameObject;
         int X = 5 * terrainSize.x, Y = 5 * terrainSize.y;
         int maxSize = terrainSize.x * terrainSize.y;
 
@@ -133,9 +132,9 @@ public class GameManager : MonoBehaviour
             }
     }
 
-    private void GenerateHexagonNeighbors()
+    private void GenerateHexagon()
     {
-        PrefabToSpawn = transform.GetChild(1).gameObject;
+        GameObject PrefabToSpawn = transform.GetChild(1).gameObject;
         terrainSize = Vector2Int.one * (2 * terrainRay + 1);
         int R = 10 * terrainRay;
         int maxSize = 1 + 3 * terrainRay * (terrainRay + 1);
@@ -186,8 +185,56 @@ public class GameManager : MonoBehaviour
 
     }
 
-    private void GeneratePlusNeighbors()
+    private void GeneratePlus()
     {
+        GameObject PrefabToSpawn = transform.GetChild(0).gameObject;
+        int X = 5 * terrainSize.x, Y = 5 * terrainSize.y;
 
+        int minBound = Mathf.Min(terrainSize.x, terrainSize.y);
+        int thicknessLength = (int)(minBound / 3);
+        int thickness = thicknessLength * 10;
+        int thresoldX = RoundUpToNearest10(X - thickness / 2), thresoldY = RoundUpToNearest10(Y - thickness / 2);
+        int maxSize = (terrainSize.y + terrainSize.x - thicknessLength) * thicknessLength;
+
+        int GetIndex(int i, int j)
+        {
+            int prevBlocks = 0;
+            for (int k = -X; k < i; k += 10)
+                prevBlocks += (k + X < thresoldX || k + X >= thresoldX + thickness) ? thicknessLength : terrainSize.y;
+            return prevBlocks + (j + Y - (i + X < thresoldX || i + X >= thresoldX + thickness ? thresoldY : 0)) / 10;
+        }
+
+        static int RoundUpToNearest10(int value) => (value + 9) / 10 * 10;
+
+        for (int i = -X; i < X; i += 10)
+            for (int j = -Y; j < Y; j += 10)
+            {
+                if ((i + X < thresoldX || i + X >= thresoldX + thickness) && (j + Y < thresoldY || j + Y >= thresoldY + thickness)) continue;
+
+                var obj = Instantiate(PrefabToSpawn, new(i + 5, 1, j + 5), Quaternion.identity, transform);
+                obj.SetActive(true);
+                obj.name = $"({i}, {j})";
+                var block = obj.AddComponent<Block>();
+
+                if (Blocks.Count == 0 || Blocks.Count == thicknessLength - 1 || ((i + X == thresoldX || i + X == thresoldX + thickness - 10) && (j == -Y || j == Y - 10)) || Blocks.Count == maxSize - thicknessLength || Blocks.Count == maxSize - 1)
+                {
+                    playersPositions[CurrentPlayerId].Add(block);
+                    block.ownerId = CurrentPlayerId;
+                    CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
+                }
+
+                block.myOwnIndex = Blocks.Count;
+                Blocks.Add(block);
+
+                foreach (var coordinates in new Vector2Int[8] { new(i - 10, j - 10), new(i - 10, j + 10), new(i - 10, j), new(i + 10, j + 10), new(i + 10, j - 10), new(i + 10, j), new(i, j + 10), new(i, j - 10) })
+                {
+                    if (coordinates.x < -X || coordinates.x >= X || coordinates.y < -Y || coordinates.y >= Y) continue;
+                    if ((coordinates.x + X < thresoldX || coordinates.x + X >= thresoldX + thickness) && (coordinates.y + Y < thresoldY || coordinates.y + Y >= thresoldY + thickness)) continue;
+
+                    var index = GetIndex(coordinates.x, coordinates.y);
+                    if (index >= 0 && index < maxSize)
+                        block.NeighborsIndexes.Add(index);
+                }
+            }
     }
 }
