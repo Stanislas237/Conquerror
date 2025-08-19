@@ -116,7 +116,7 @@ public class GameManager : MonoBehaviour
                 {
                     playersPositions[CurrentPlayerId].Add(block);
                     block.ownerId = CurrentPlayerId;
-                    CurrentPlayerId = (CurrentPlayerId + 1) % 2;
+                    CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
                 }
 
                 block.myOwnIndex = Blocks.Count;
@@ -145,21 +145,42 @@ public class GameManager : MonoBehaviour
             int prevBlocks = 0;
             for (int k = -R; k < i; k += 10)
                 prevBlocks += terrainRay + 1 + Mathf.Abs(terrainRay - Mathf.Abs(k / 10));
+            int thresold = Mathf.FloorToInt((j + R) / 10f) - Mathf.FloorToInt(Mathf.Abs(i) / 20f);
 
-            return prevBlocks + Mathf.FloorToInt((j + R) / 10f) - Mathf.FloorToInt(Mathf.Abs(i) / 20f);
+            if (thresold >= 0 && thresold <= (2 * terrainRay) - (Mathf.Abs(i) / 10))
+                return prevBlocks + thresold;
+            else return -1;
         }
 
         for (int i = -R; i <= R; i += 10)
         {
             int nbBlocks = R + 2 + Mathf.Abs(R - Mathf.Abs(i));
-            for (int j = -nbBlocks / 2; j < nbBlocks / 2; j += 10)
+            for (int j = 1 - nbBlocks / 2; j < nbBlocks / 2; j += 10)
             {
-                var obj = Instantiate(PrefabToSpawn, new(i, 1, j + 1), PrefabToSpawn.transform.rotation, transform);
+                var obj = Instantiate(PrefabToSpawn, new(i, 1, j), PrefabToSpawn.transform.rotation, transform);
                 obj.SetActive(true);
-                obj.name = $"({i}, {j + 1})";
+                obj.name = $"({i}, {j})";
 
                 var block = obj.AddComponent<Block>();
-                block.myOwnIndex = GetIndex(i, j+1);
+
+                if (Blocks.Count == 0 || Blocks.Count == terrainRay || (i == 0 && Mathf.Abs(j) == R) || Blocks.Count == maxSize - terrainRay - 1 || Blocks.Count == maxSize - 1)
+                {
+                    playersPositions[CurrentPlayerId].Add(block);
+                    block.ownerId = CurrentPlayerId;
+                    CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
+                }
+
+                block.myOwnIndex = Blocks.Count;
+                Blocks.Add(block);
+
+                foreach (var coordinates in new Vector2Int[6] { new(i - 10, j + 5), new(i - 10, j - 5), new(i, j - 10), new(i, j + 10), new(i + 10, j - 5), new(i + 10, j + 5) })
+                {
+                    if (coordinates.x < -R || coordinates.x > R || coordinates.y < -R || coordinates.y > R) continue;
+
+                    var index = GetIndex(coordinates.x, coordinates.y);
+                    if (index >= 0 && index < maxSize)
+                        block.NeighborsIndexes.Add(index);
+                }
             }
         }
 
@@ -167,88 +188,6 @@ public class GameManager : MonoBehaviour
 
     private void GeneratePlusNeighbors()
     {
-        
+
     }
-
-
-    // protected virtual void Start() => Draw();
-
-    // private bool Playing = true;
-
-    // private void Trigger(T pos, string trigger = "hover")
-    // {
-    //     if (playersPositions[CurrentPlayerIndex].Any(c => Neighbors(c, pos, false)))
-    //         if (trigger == "hover")
-    //             SetColor(pos, hoverColor);
-    //         else if (trigger == "click" && Playing)
-    //         {
-    //             Conquer(pos);
-    //             Draw();
-
-    //             if (playersPositions.Count(list => list.Count != 0) <= 1)
-    //             {
-    //                 Debug.Log($"Fin de la partie ! Joueur {CurrentPlayerIndex + 1} a gagné");
-    //                 Playing = false;
-    //                 return;
-    //             }
-    //             else do
-    //                 CurrentPlayerIndex = (CurrentPlayerIndex + 1) % nb_players;
-    //             while (playersPositions[CurrentPlayerIndex].Count == 0);
-    //         }
-    // }
-
-    // private void Draw()
-    // {
-    //     for (int i = 0; i < nb_players; i++)
-    //         foreach (var item in playersPositions[i])
-    //             SetColor(item, colors[i]);
-    // }
-
-    // protected abstract void SetColor(T pos, Color c);
-
-    // private void UnsetColor(T pos)
-    // {
-    //     SetColor(pos, Color.white);
-    //     Draw();
-    // }
-
-    // protected abstract bool Neighbors(T first, T second, bool onlyIgnoreMyOwnList);
-
-    // protected abstract T SetUpButton(int index);
-
-    // private void Conquer(T pos)
-    // {
-    //     for (int i = 0; i < nb_players; i++)
-    //         if (i == CurrentPlayerIndex) continue;
-    //         else
-    //             foreach (var item in playersPositions[i].Where(c => Neighbors(c, pos, true)).ToList())
-    //             {
-    //                 playersPositions[i].Remove(item);
-    //                 Conquer(item);
-    //             }
-
-    //     if (!playersPositions[CurrentPlayerIndex].Contains(pos))
-    //         playersPositions[CurrentPlayerIndex].Add(pos);
-    // }
-
-    // protected void AddEventTriggers(GameObject obj, T pos)
-    // {
-    //     if (!obj.TryGetComponent(out EventTrigger trigger))
-    //         trigger = obj.AddComponent<EventTrigger>();
-
-    //     // Pointer Down
-    //     EventTrigger.Entry pointerDownEntry = new() { eventID = EventTriggerType.PointerDown };
-    //     pointerDownEntry.callback.AddListener(_ => Trigger(pos, "click"));
-    //     trigger.triggers.Add(pointerDownEntry);
-
-    //     // Pointer Enter
-    //     EventTrigger.Entry pointerEnterEntry = new() { eventID = EventTriggerType.PointerEnter };
-    //     pointerEnterEntry.callback.AddListener(_ => Trigger(pos));
-    //     trigger.triggers.Add(pointerEnterEntry);
-
-    //     // Pointer Exit
-    //     EventTrigger.Entry pointerExitEntry = new() { eventID = EventTriggerType.PointerExit };
-    //     pointerExitEntry.callback.AddListener(_ => UnsetColor(pos));
-    //     trigger.triggers.Add(pointerExitEntry);
-    // }
 }

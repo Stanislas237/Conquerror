@@ -305,12 +305,13 @@ MonoBehaviour:
   PlayerColors:
   - {fileID: 2100000, guid: c22b324f7edce964b8737014bd8646b0, type: 2}
   - {fileID: 15303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 7c97f21707a992f4b95ef96bb2afb76c, type: 2}
   hoverColor: {fileID: 2100000, guid: 33f1a38075793b4408a89bd33b19d4c4, type: 2}
   normalColor: {fileID: 2100000, guid: a9cbf572860bd0e499500e2261eac540, type: 2}
-  nb_players: 3
+  nb_players: 2
   Plane: {fileID: 417558823}
-  terrainSize: {x: 6, y: 8}
-  terrainRay: 6
+  terrainSize: {x: 10, y: 14}
+  terrainRay: 10
   Blocks: []
 --- !u!1 &417558819
 GameObject:
@@ -518,6 +519,7 @@ GameObject:
   - component: {fileID: 543450653418920363}
   - component: {fileID: 3469287837268055566}
   - component: {fileID: 1711813855352644292}
+  - component: {fileID: 3469287837268055567}
   m_Layer: 0
   m_Name: Hexagone
   m_TagString: Untagged
@@ -577,6 +579,28 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919132149478408977}
+  m_Mesh: {fileID: 6239881831769578202, guid: e43e3746427de8f469eeab78031ecce9, type: 3}
+--- !u!64 &3469287837268055567
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149478408977}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
   m_Mesh: {fileID: 6239881831769578202, guid: e43e3746427de8f469eeab78031ecce9, type: 3}
 --- !u!1 &7970375316142556010
 GameObject:
