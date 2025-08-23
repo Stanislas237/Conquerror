@@ -1,4 +1,5 @@
 using TMPro;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -8,11 +9,14 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance;
     private Camera mainCamera;
     private List<Block> blocksToShowLevels = new();
+    public Action Fusion;
 
     [SerializeField]
     private Transform ConquerPointsBar;
     [SerializeField]
     private Transform LevelTextPrefab;
+    [SerializeField]
+    private Transform PowersParent;
     [SerializeField]
     private MeshRenderer PlayerIndicator;
 
@@ -24,6 +28,12 @@ public class UIManager : MonoBehaviour
             Destroy(gameObject);
 
         mainCamera = Camera.main;
+    }
+
+    private void Start()
+    {
+        foreach (Transform t in PowersParent)
+            t.GetComponent<Button>().onClick.AddListener(() => Fusion?.Invoke());
     }
 
     public void ShowPlayerUI(int conquerPoints, Material m)
@@ -45,6 +55,13 @@ public class UIManager : MonoBehaviour
 
         if (!blocksToShowLevels.Contains(block))
             blocksToShowLevels.Add(block);
+    }
+
+    public void ShowPowers(int selectLevelCount, int conquerPoints)
+    {
+        int requiredPoints = selectLevelCount >= 5 ? 50 : (selectLevelCount - 1) * 10;
+        foreach (Transform t in PowersParent)
+            t.gameObject.SetActive(conquerPoints >= requiredPoints && t.name.Contains((selectLevelCount - 1).ToString()));
     }
 
     public void RefreshLevels()

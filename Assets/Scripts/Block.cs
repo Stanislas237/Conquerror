@@ -44,12 +44,6 @@ public class Block : MonoBehaviour
         UIManager.Instance.ShowBlockLevel(this);
     }
 
-    public void ConquerBy(int player, List<Block> playerList, Material m)
-    {
-        ownerId = player;
-        playerList.Add(this);
-    }
-
     private void OnMouseEnter() => GameManager.Instance.OnBlockEnter(this);
     private void OnMouseExit() => GameManager.Instance.OnBlockExit(this);
     private void OnMouseDown() => GameManager.Instance.OnBlockDown(this);
