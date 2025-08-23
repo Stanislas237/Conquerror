@@ -1,7 +1,5 @@
 using UnityEngine;
 using System.Linq;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
@@ -9,12 +7,18 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
 
     // Données des joueurs
-    private readonly List<Block>[] playersPositions = new List<Block>[4] { new(), new(), new(), new() };
+    private readonly Dictionary<string, object> PlayerDatas = new()
+    {
+        { "playersPositions", new List<Block>[4] { new(), new(), new(), new() }},
+        { "nbTurnToPass", new int[4] },
+        { "conquerPoints", new int[4] },
+        { "PlayerColors", new Material[4] },
+    };
+
     private readonly List<Block> Blocks = new();
     public readonly List<int> SelectedBlocks = new();
-    private Material[] PlayerColors;
     private int CurrentPlayerId = 0;
-    private int nbTurnToPass = 0;
+    private int SelectionLevel { get => SelectedBlocks.Sum(b => Blocks[b].Level + 1); }
 
     // Matériaux / Couleurs
     public Material hoverColor;
@@ -39,7 +43,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        PlayerColors = Resources.LoadAll<Material>("Materials/Players");
+        PlayerDatas["PlayerColors"] = Resources.LoadAll<Material>("Materials/Players");
         hoverColor = Resources.Load<Material>("Materials/Terrain");
         myHoverColor = Resources.Load<Material>("Materials/myHover");
         normalColor = Resources.Load<Material>("Materials/Block");
@@ -49,6 +53,8 @@ public class GameManager : MonoBehaviour
 
         transform.GetChild(2).localScale = new(terrainSize.x, 1, terrainSize.y);
     }
+
+    #region Block Management Handlers
 
     public void OnBlockEnter(Block block)
     {
@@ -69,25 +75,51 @@ public class GameManager : MonoBehaviour
 
     public void OnBlockExit(Block block)
     {
-        if (!SelectedBlocks.Contains(block.myOwnIndex))
-            if (block.ownerId == CurrentPlayerId)
-                block.SetColor(PlayerColors[CurrentPlayerId]);
-            else if (block.ownerId == -1 && GetPositions().Any(p => p.NeighborsIndexes.Contains(block.myOwnIndex)))
-                block.SetColor(normalColor);
+        if (!SelectedBlocks.Contains(block.myOwnIndex) && ((block.ownerId == CurrentPlayerId) ||
+            (block.ownerId == -1 && GetPositions().Any(p => p.NeighborsIndexes.Contains(block.myOwnIndex)))))
+            block.SetColor(normalColor);
     }
 
-    public List<Block> GetPositions() => playersPositions[CurrentPlayerId];
+    #endregion
+
+    #region Player Datas Getters
+
+    public List<Block> GetPositions(int i) => ((List<Block>[])PlayerDatas["playersPositions"])[i];
+    public List<Block> GetPositions() => GetPositions(CurrentPlayerId);
+
+    public int[] GetPassTurns() => (int[])PlayerDatas["nbTurnToPass"];
+
+    public int[] GetConquerPoints() => (int[])PlayerDatas["conquerPoints"];
+
+    public Material[] GetColors() => (Material[])PlayerDatas["PlayerColors"];
+
+    #endregion
+
+
+    #region Game Management And Status Methods
+
+    public bool IsBlockCircled(Block block) => !block.NeighborsIndexes.Any(nId => Blocks[nId].ownerId == -1);
+
+    private void SetColor(Block block, Material m, PaintMode paintMode)
+    {
+        if (paintMode != PaintMode.onlyPawn)
+            block.SetColor(m);
+
+        if (paintMode != PaintMode.onlyBlock)
+            block.SetContentColor(m);
+    }
 
     private void Draw()
     {
         var indexesAlreadyModified = new List<int>();
 
         for (int i = 0; i < nb_players; i++)
-            foreach (var block in playersPositions[i])
+            foreach (var block in GetPositions(i))
             {
                 bool neighborSelected = SelectedBlocks.Contains(block.myOwnIndex);
 
-                block.SetColor(neighborSelected ? myHoverColor : PlayerColors[i]);
+                SetColor(block, GetColors()[i], PaintMode.onlyPawn);
+                SetColor(block, neighborSelected ? myHoverColor : normalColor, PaintMode.onlyBlock);
                 indexesAlreadyModified.Add(block.myOwnIndex);
                 foreach (var neighborIndex in block.NeighborsIndexes)
                     if (Blocks[neighborIndex].ownerId == -1 && !indexesAlreadyModified.Contains(neighborIndex))
@@ -101,26 +133,43 @@ public class GameManager : MonoBehaviour
 
     private void NextPlayerTurn()
     {
-        // if (nbTurnToPass > 0)
-        //     nbTurnToPass--;
-        // else
-            CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
+        CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
+        var nbTurnToPass = GetPassTurns();
+
+        if (nbTurnToPass[CurrentPlayerId] > 0 || !GetPositions().Any(b => !IsBlockCircled(b)))
+        {
+            nbTurnToPass[CurrentPlayerId] = Mathf.Max(nbTurnToPass[CurrentPlayerId] - 1, 0);
+            NextPlayerTurn();
+        }
+        else
+            UIManager.Instance.ShowPlayerUI(GetConquerPoints()[CurrentPlayerId], GetColors()[CurrentPlayerId]);
     }
 
-    public void Free(Block block) => playersPositions[block.ownerId].Remove(block);
+    #endregion
+
+
+    #region Player Actions Methods
+
+    private void Free(Block block)
+    {
+        GetPositions(block.ownerId).Remove(block);
+        block.Content.SetActive(false);
+    }
 
     private void Conquer(Block block)
     {
         UnSelect();
-        Conquer(block, block.level + 1);
+        Conquer(block, block.Level + 1);
         Draw();
         NextPlayerTurn();
     }
 
     private void Conquer(Block block, int recursive)
     {
-        block.ownerId = CurrentPlayerId;
-        playersPositions[CurrentPlayerId].Add(block);
+        if (block.Level > 0)
+            block.SetLevel(0);
+        else
+            block.ConquerBy(CurrentPlayerId, GetPositions(), GetColors()[CurrentPlayerId]);
 
         if (recursive > 0)
             foreach (var blockId in block.NeighborsIndexes)
@@ -130,23 +179,24 @@ public class GameManager : MonoBehaviour
                 {
                     Free(otherBlock);
                     Conquer(otherBlock, recursive - 1);
+                    GetConquerPoints()[CurrentPlayerId]++;
                 }
             }
     }
 
-    public void UnSelect(Block block)
+    private void UnSelect(Block block)
     {
         SelectedBlocks.Remove(block.myOwnIndex);
         Draw();
     }
 
-    public void UnSelect()
+    private void UnSelect()
     {
         SelectedBlocks.Clear();
         Draw();
     }
 
-    public void Select(Block block)
+    private void Select(Block block)
     {
         if (SelectedBlocks.Contains(block.myOwnIndex))
             SelectedBlocks.Remove(block.myOwnIndex);
@@ -154,10 +204,15 @@ public class GameManager : MonoBehaviour
         {
             if (SelectedBlocks.Count != 0 && !block.NeighborsIndexes.Contains(SelectedBlocks[SelectedBlocks.Count - 1]))
                 SelectedBlocks.Clear();
-            SelectedBlocks.Add(block.myOwnIndex);            
+            SelectedBlocks.Add(block.myOwnIndex);
         }
         Draw();
     }
+
+    #endregion
+
+
+    #region Terrain Generation Methods
 
     private void GenerateBlocks()
     {
@@ -193,7 +248,7 @@ public class GameManager : MonoBehaviour
 
                 if (Blocks.Count == 0 || Blocks.Count == terrainSize.y - 1 || Blocks.Count == maxSize - terrainSize.y || Blocks.Count == maxSize - 1)
                 {
-                    playersPositions[CurrentPlayerId].Add(block);
+                    GetPositions().Add(block);
                     block.ownerId = CurrentPlayerId;
                     CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
                 }
@@ -248,7 +303,7 @@ public class GameManager : MonoBehaviour
 
                 if (Blocks.Count == 0 || Blocks.Count == terrainRay || (i == 0 && Mathf.Abs(j) == R) || Blocks.Count == maxSize - terrainRay - 1 || Blocks.Count == maxSize - 1)
                 {
-                    playersPositions[CurrentPlayerId].Add(block);
+                    GetPositions().Add(block);
                     block.ownerId = CurrentPlayerId;
 
                     if (CurrentPlayerId == nb_players - 1 && player_Id_increment_to_set_alt_mode_start_positions == 1)
@@ -310,7 +365,7 @@ public class GameManager : MonoBehaviour
 
                 if (Blocks.Count == 0 || Blocks.Count == thicknessLength - 1 || ((i + X == thresoldX || i + X == thresoldX + thickness - 10) && (j == -Y || j == Y - 10)) || Blocks.Count == maxSize - thicknessLength || Blocks.Count == maxSize - 1)
                 {
-                    playersPositions[CurrentPlayerId].Add(block);
+                    GetPositions().Add(block);
                     block.ownerId = CurrentPlayerId;
                     CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
                 }
@@ -332,4 +387,8 @@ public class GameManager : MonoBehaviour
                 }
             }
     }
+    
+    #endregion
 }
+
+public enum PaintMode { onlyBlock, onlyPawn, all }
