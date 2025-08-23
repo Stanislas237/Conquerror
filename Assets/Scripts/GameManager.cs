@@ -8,20 +8,24 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
+    // Données des joueurs
     private readonly List<Block>[] playersPositions = new List<Block>[4] { new(), new(), new(), new() };
+    private readonly List<Block> Blocks = new();
+    public readonly List<int> SelectedBlocks = new();
     private Material[] PlayerColors;
     private int CurrentPlayerId = 0;
+    private int nbTurnToPass = 0;
 
-    [HideInInspector]
+    // Matériaux / Couleurs
     public Material hoverColor;
-    [HideInInspector]
+    public Material myHoverColor;
     public Material normalColor;
-    [HideInInspector]
-    public List<Block> Blocks = new();
 
+    // Données de l'éditeur
     [Range(2, 4)]
     public int nb_players = 2;
-
+    public bool alt_mode = false;
+    public bool simulateNeighbors = true;
     public Vector2Int terrainSize = new();
     public int terrainRay = 5;
 
@@ -37,6 +41,7 @@ public class GameManager : MonoBehaviour
     {
         PlayerColors = Resources.LoadAll<Material>("Materials/Players");
         hoverColor = Resources.Load<Material>("Materials/Terrain");
+        myHoverColor = Resources.Load<Material>("Materials/myHover");
         normalColor = Resources.Load<Material>("Materials/Block");
 
         GenerateBlocks();
@@ -45,38 +50,113 @@ public class GameManager : MonoBehaviour
         transform.GetChild(2).localScale = new(terrainSize.x, 1, terrainSize.y);
     }
 
+    public void OnBlockEnter(Block block)
+    {
+        if (!SelectedBlocks.Contains(block.myOwnIndex))
+            if (block.ownerId == CurrentPlayerId)
+                block.SetColor(myHoverColor);
+            else if (block.ownerId == -1 && GetPositions().Any(p => p.NeighborsIndexes.Contains(block.myOwnIndex)))
+                block.SetColor(hoverColor);
+    }
+
+    public void OnBlockDown(Block block)
+    {
+        if (block.ownerId == CurrentPlayerId)
+            Select(block);
+        else if (block.ownerId == -1 && GetPositions().Any(p => p.NeighborsIndexes.Contains(block.myOwnIndex)))
+            Conquer(block);
+    }
+
+    public void OnBlockExit(Block block)
+    {
+        if (!SelectedBlocks.Contains(block.myOwnIndex))
+            if (block.ownerId == CurrentPlayerId)
+                block.SetColor(PlayerColors[CurrentPlayerId]);
+            else if (block.ownerId == -1 && GetPositions().Any(p => p.NeighborsIndexes.Contains(block.myOwnIndex)))
+                block.SetColor(normalColor);
+    }
+
     public List<Block> GetPositions() => playersPositions[CurrentPlayerId];
 
     private void Draw()
     {
+        var indexesAlreadyModified = new List<int>();
+
         for (int i = 0; i < nb_players; i++)
             foreach (var block in playersPositions[i])
-                block.SetColor(PlayerColors[i]);
+            {
+                bool neighborSelected = SelectedBlocks.Contains(block.myOwnIndex);
+
+                block.SetColor(neighborSelected ? myHoverColor : PlayerColors[i]);
+                indexesAlreadyModified.Add(block.myOwnIndex);
+                foreach (var neighborIndex in block.NeighborsIndexes)
+                    if (Blocks[neighborIndex].ownerId == -1 && !indexesAlreadyModified.Contains(neighborIndex))
+                    {
+                        if (neighborSelected) indexesAlreadyModified.Add(neighborIndex);
+                        Blocks[neighborIndex].SetColor(neighborSelected ? hoverColor : normalColor, true);
+                        Blocks[neighborIndex].canColor = !neighborSelected;
+                    }
+            }
     }
 
-    public void Conquer(Block block)
+    private void NextPlayerTurn()
     {
-        Conquer(block, true);
-        Draw();
-
-        CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
+        // if (nbTurnToPass > 0)
+        //     nbTurnToPass--;
+        // else
+            CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
     }
 
-    private void Conquer(Block block, bool recursive)
+    public void Free(Block block) => playersPositions[block.ownerId].Remove(block);
+
+    private void Conquer(Block block)
+    {
+        UnSelect();
+        Conquer(block, block.level + 1);
+        Draw();
+        NextPlayerTurn();
+    }
+
+    private void Conquer(Block block, int recursive)
     {
         block.ownerId = CurrentPlayerId;
         playersPositions[CurrentPlayerId].Add(block);
 
-        if (recursive)
+        if (recursive > 0)
             foreach (var blockId in block.NeighborsIndexes)
             {
                 var otherBlock = Blocks[blockId];
                 if (otherBlock.ownerId >= 0 && otherBlock.ownerId != CurrentPlayerId)
                 {
-                    playersPositions[otherBlock.ownerId].Remove(otherBlock);
-                    Conquer(otherBlock, false);
+                    Free(otherBlock);
+                    Conquer(otherBlock, recursive - 1);
                 }
             }
+    }
+
+    public void UnSelect(Block block)
+    {
+        SelectedBlocks.Remove(block.myOwnIndex);
+        Draw();
+    }
+
+    public void UnSelect()
+    {
+        SelectedBlocks.Clear();
+        Draw();
+    }
+
+    public void Select(Block block)
+    {
+        if (SelectedBlocks.Contains(block.myOwnIndex))
+            SelectedBlocks.Remove(block.myOwnIndex);
+        else
+        {
+            if (SelectedBlocks.Count != 0 && !block.NeighborsIndexes.Contains(SelectedBlocks[SelectedBlocks.Count - 1]))
+                SelectedBlocks.Clear();
+            SelectedBlocks.Add(block.myOwnIndex);            
+        }
+        Draw();
     }
 
     private void GenerateBlocks()
@@ -121,7 +201,10 @@ public class GameManager : MonoBehaviour
                 block.myOwnIndex = Blocks.Count;
                 Blocks.Add(block);
 
-                foreach (var coordinates in new Vector2Int[8] { new(i - 10, j - 10), new(i - 10, j + 10), new(i - 10, j), new(i + 10, j + 10), new(i + 10, j - 10), new(i + 10, j), new(i, j + 10), new(i, j - 10) })
+                var NeighborsIndexes = new Vector2Int[4] { new(i - 10, j), new(i + 10, j), new(i, j + 10), new(i, j - 10) };
+                if (!alt_mode) NeighborsIndexes = NeighborsIndexes.Concat(new Vector2Int[4] { new(i - 10, j - 10), new(i - 10, j + 10), new(i + 10, j + 10), new(i + 10, j - 10) }).ToArray();
+
+                foreach (var coordinates in NeighborsIndexes)
                 {
                     if (coordinates.x < -X || coordinates.x >= X || coordinates.y < -Y || coordinates.y >= Y) continue;
 
@@ -138,6 +221,7 @@ public class GameManager : MonoBehaviour
         terrainSize = Vector2Int.one * (2 * terrainRay + 1);
         int R = 10 * terrainRay;
         int maxSize = 1 + 3 * terrainRay * (terrainRay + 1);
+        int player_Id_increment_to_set_alt_mode_start_positions = 1;
 
         int GetIndex(int i, int j)
         {
@@ -166,13 +250,20 @@ public class GameManager : MonoBehaviour
                 {
                     playersPositions[CurrentPlayerId].Add(block);
                     block.ownerId = CurrentPlayerId;
-                    CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
+
+                    if (CurrentPlayerId == nb_players - 1 && player_Id_increment_to_set_alt_mode_start_positions == 1)
+                        player_Id_increment_to_set_alt_mode_start_positions = -1;
+                    else
+                        CurrentPlayerId = (CurrentPlayerId + player_Id_increment_to_set_alt_mode_start_positions) % nb_players;
                 }
 
                 block.myOwnIndex = Blocks.Count;
                 Blocks.Add(block);
 
-                foreach (var coordinates in new Vector2Int[6] { new(i - 10, j + 5), new(i - 10, j - 5), new(i, j - 10), new(i, j + 10), new(i + 10, j - 5), new(i + 10, j + 5) })
+                var NeighborsIndexes = new Vector2Int[3] { new(i - 10, j + 5), new(i, j - 10), new(i + 10, j + 5) };
+                if (!alt_mode) NeighborsIndexes = NeighborsIndexes.Concat(new Vector2Int[3] { new(i, j + 10), new(i + 10, j - 5), new(i - 10, j - 5) }).ToArray();
+
+                foreach (var coordinates in NeighborsIndexes)
                 {
                     if (coordinates.x < -R || coordinates.x > R || coordinates.y < -R || coordinates.y > R) continue;
 
@@ -183,6 +274,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        CurrentPlayerId = 0;
     }
 
     private void GeneratePlus()
@@ -226,7 +318,10 @@ public class GameManager : MonoBehaviour
                 block.myOwnIndex = Blocks.Count;
                 Blocks.Add(block);
 
-                foreach (var coordinates in new Vector2Int[8] { new(i - 10, j - 10), new(i - 10, j + 10), new(i - 10, j), new(i + 10, j + 10), new(i + 10, j - 10), new(i + 10, j), new(i, j + 10), new(i, j - 10) })
+                var NeighborsIndexes = new Vector2Int[4] { new(i - 10, j), new(i + 10, j), new(i, j + 10), new(i, j - 10) };
+                if (!alt_mode) NeighborsIndexes = NeighborsIndexes.Concat(new Vector2Int[4] { new(i - 10, j - 10), new(i - 10, j + 10), new(i + 10, j + 10), new(i + 10, j - 10) }).ToArray();
+
+                foreach (var coordinates in NeighborsIndexes)
                 {
                     if (coordinates.x < -X || coordinates.x >= X || coordinates.y < -Y || coordinates.y >= Y) continue;
                     if ((coordinates.x + X < thresoldX || coordinates.x + X >= thresoldX + thickness) && (coordinates.y + Y < thresoldY || coordinates.y + Y >= thresoldY + thickness)) continue;

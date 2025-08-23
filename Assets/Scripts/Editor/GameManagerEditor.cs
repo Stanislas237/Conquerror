@@ -12,6 +12,12 @@ public class GameManagerEditor : Editor
         // Affiche le champ nb_players
         gm.nb_players = EditorGUILayout.IntSlider("Nombre de joueurs", gm.nb_players, 2, 4);
 
+        // Affiche le champ mode alternatif
+        gm.alt_mode = EditorGUILayout.Toggle("Mode Alternatif", gm.alt_mode);
+
+        // Affiche le champ Simulation de voisins
+        gm.simulateNeighbors = EditorGUILayout.Toggle("Simulations de voisins", gm.simulateNeighbors);
+
         EditorGUILayout.Space();
 
         // Affiche les champs en fonction de nb_players

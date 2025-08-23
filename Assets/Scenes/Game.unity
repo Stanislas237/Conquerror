@@ -304,11 +304,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoverColor: {fileID: 2100000, guid: 33f1a38075793b4408a89bd33b19d4c4, type: 2}
+  myHoverColor: {fileID: 0}
   normalColor: {fileID: 2100000, guid: a9cbf572860bd0e499500e2261eac540, type: 2}
-  Blocks: []
-  nb_players: 4
-  terrainSize: {x: 26, y: 18}
-  terrainRay: 10
+  nb_players: 3
+  alt_mode: 0
+  simulateNeighbors: 1
+  terrainSize: {x: 15, y: 13}
+  terrainRay: 5
 --- !u!1 &417558819
 GameObject:
   m_ObjectHideFlags: 0
