@@ -4,30 +4,63 @@ using System.Collections.Generic;
 
 public class Block : MonoBehaviour
 {
-    public List<int> NeighborsIndexes = new();
-
+    // Caractéristiques principales
+    public HashSet<int> NeighborsIndexes = new();
     public int myOwnIndex = -1;
+    private MeshRenderer mr;
+    public GameObject Content;
 
+
+    // Etat du bloc, pouvoirs...
     public int Level
     {
         get;
         private set;
     } = 0;
 
-    public int ownerId = -1;
+    public int OwnerId
+    {
+        get;
+        private set;
+    } = -1;
 
-    public GameObject Content;
+    public bool Active
+    {
+        get;
+        private set;
+    } = true;
+    
+    public int MoveRange
+    {
+        get;
+        private set;
+    } = 1;
+    
+    public bool CanColor
+    {
+        get;
+        private set;
+    } = true;
 
-    public bool canColor = true;
+    public void SetLevel(int newLevel)
+    {
+        Level = newLevel;
+        Content ??= transform.GetChild(0).gameObject;
+        UIManager.Instance.ShowBlockLevel(this);
+    }
 
-    public bool canConquer = true;
+    public void SetOwnerId(int newOwner) => OwnerId = newOwner;
 
-    private MeshRenderer mr;
+    public void SetActive(bool active) => Active = active;
+
+    public void SetMoveRange(int newRange) => MoveRange = newRange;
+
+    public void SetColorState(bool canColor) => CanColor = canColor;
 
     public void SetColor(Material m, bool important = false)
     {
         mr ??= GetComponent<MeshRenderer>();
-        if (canColor || important) mr.material = m;
+        if (CanColor || important) mr.material = m;
     }
 
     public void SetContentColor(Material m)
@@ -37,11 +70,30 @@ public class Block : MonoBehaviour
         Content.GetComponent<MeshRenderer>().material = m;
     }
 
-    public void SetLevel(int newLevel)
+    public bool HasNeighbor(List<Block> Blocks, int blockId, int moveRange) => NeighborsIndexes.Contains(blockId) ||
+        (moveRange > 1 && NeighborsIndexes.Any(i => Blocks[i].HasNeighbor(Blocks, blockId, moveRange - 1)));
+
+    public HashSet<int> GetExtendedNeighbors(List<Block> Blocks)
     {
-        Level = newLevel;
-        Content ??= transform.GetChild(0).gameObject;
-        UIManager.Instance.ShowBlockLevel(this);
+        var extendedNeighbors = new HashSet<int>(NeighborsIndexes);
+        var currentNeighbors = new HashSet<int>(NeighborsIndexes);
+        var moveRange = MoveRange;
+
+        while (moveRange > 1)
+        {
+            var newNeighbors = new HashSet<int>();
+
+            foreach (var index in currentNeighbors)
+                newNeighbors.UnionWith(Blocks[index].NeighborsIndexes);
+
+            extendedNeighbors.UnionWith(newNeighbors);
+
+            currentNeighbors = new HashSet<int>(newNeighbors);
+
+            moveRange--;
+        }
+
+        return extendedNeighbors;
     }
 
     private void OnMouseEnter() => GameManager.Instance.OnBlockEnter(this);

@@ -423,8 +423,8 @@ MonoBehaviour:
   myHoverColor: {fileID: 0}
   normalColor: {fileID: 2100000, guid: a9cbf572860bd0e499500e2261eac540, type: 2}
   nb_players: 3
-  alt_mode: 0
-  simulateNeighbors: 0
+  alt_mode: 1
+  simulateNeighbors: 1
   terrainSize: {x: 15, y: 13}
   terrainRay: 4
 --- !u!1 &226152805

@@ -57,11 +57,11 @@ public class UIManager : MonoBehaviour
             blocksToShowLevels.Add(block);
     }
 
-    public void ShowPowers(int selectLevelCount, int conquerPoints)
+    public void ShowPowers(int selectLevelCount, int nbBlocks, int conquerPoints)
     {
         int requiredPoints = selectLevelCount >= 5 ? 50 : (selectLevelCount - 1) * 10;
         foreach (Transform t in PowersParent)
-            t.gameObject.SetActive(conquerPoints >= requiredPoints && t.name.Contains((selectLevelCount - 1).ToString()));
+            t.gameObject.SetActive(nbBlocks > 1 && conquerPoints >= requiredPoints && t.name.Contains((selectLevelCount - 1).ToString()));
     }
 
     public void RefreshLevels()

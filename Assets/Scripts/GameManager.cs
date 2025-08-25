@@ -9,29 +9,37 @@ public class GameManager : MonoBehaviour
     // Données des joueurs
     private readonly Dictionary<string, object> PlayerDatas = new()
     {
-        { "playersPositions", new List<Block>[4] { new(), new(), new(), new() }},
+        { "playersPositions", new HashSet<int>[4] { new(), new(), new(), new() }},
         { "nbTurnToPass", new int[4] },
         { "conquerPoints", new int[4] },
         { "PlayerColors", new Material[4] },
     };
 
     private readonly List<Block> Blocks = new();
-    public readonly List<int> SelectedBlocks = new();
-    private int CurrentPlayerId = 0;
-    private int totalTurns = 0;
+
+    private readonly List<int> SelectedBlocks = new();
+
     private int SelectionLevel { get => SelectedBlocks.Sum(b => Blocks[b].Level + 1); }
 
+    private int CurrentPlayerId = 0;
+
+    // private int totalTurns = 0;
+
     // Matériaux / Couleurs
-    public Material hoverColor;
-    public Material myHoverColor;
-    public Material normalColor;
+    private Material hoverColor;
+    private Material myHoverColor;
+    private Material normalColor;
 
     // Données de l'éditeur
     [Range(2, 4)]
     public int nb_players = 2;
+
     public bool alt_mode = false;
+
     public bool simulateNeighbors = true;
+
     public Vector2Int terrainSize = new();
+
     public int terrainRay = 5;
 
     private void Awake()
@@ -58,37 +66,37 @@ public class GameManager : MonoBehaviour
     }
 
     #region Block Management Handlers
-
+    
     public void OnBlockEnter(Block block)
     {
         if (!SelectedBlocks.Contains(block.myOwnIndex))
-            if (block.ownerId == CurrentPlayerId)
+            if (block.OwnerId == CurrentPlayerId)
                 block.SetColor(myHoverColor);
-            else if (block.ownerId == -1 && GetPositions().Any(p => p.NeighborsIndexes.Contains(block.myOwnIndex)))
+            else if (block.OwnerId == -1 && GetPositions().Any(i => Blocks[i].HasNeighbor(Blocks, block.myOwnIndex, Blocks[i].MoveRange)))
                 block.SetColor(hoverColor);
     }
 
     public void OnBlockDown(Block block)
     {
-        if (block.ownerId == CurrentPlayerId)
+        if (block.OwnerId == CurrentPlayerId)
             Select(block);
-        else if (block.ownerId == -1 && GetPositions().Any(p => p.NeighborsIndexes.Contains(block.myOwnIndex)))
+        else if (block.OwnerId == -1 && GetPositions().Any(i => Blocks[i].HasNeighbor(Blocks, block.myOwnIndex, Blocks[i].MoveRange)))
             Conquer(block);
     }
 
     public void OnBlockExit(Block block)
     {
-        if (!SelectedBlocks.Contains(block.myOwnIndex) && ((block.ownerId == CurrentPlayerId) ||
-            (block.ownerId == -1 && GetPositions().Any(p => p.NeighborsIndexes.Contains(block.myOwnIndex)))))
+        if (!SelectedBlocks.Contains(block.myOwnIndex) && ((block.OwnerId == CurrentPlayerId) || (block.OwnerId == -1 && GetPositions().Any(i => Blocks[i].HasNeighbor(Blocks, block.myOwnIndex, Blocks[i].MoveRange)))))
             block.SetColor(normalColor);
     }
 
     #endregion
 
+
     #region Player Datas Getters
 
-    private List<Block> GetPositions(int i) => ((List<Block>[])PlayerDatas["playersPositions"])[i];
-    private List<Block> GetPositions() => GetPositions(CurrentPlayerId);
+    private HashSet<int> GetPositions(int i) => ((HashSet<int>[])PlayerDatas["playersPositions"])[i];
+    private HashSet<int> GetPositions() => GetPositions(CurrentPlayerId);
 
     private int[] GetPassTurns() => (int[])PlayerDatas["nbTurnToPass"];
 
@@ -101,7 +109,7 @@ public class GameManager : MonoBehaviour
 
     #region Game Management And Status Methods
 
-    public bool IsBlockCircled(Block block) => !block.NeighborsIndexes.Any(nId => Blocks[nId].ownerId == -1);
+    public bool IsBlockCircled(Block block) => !block.NeighborsIndexes.Any(nId => Blocks[nId].OwnerId == -1);
 
     private void SetColor(Block block, Material m, PaintMode paintMode)
     {
@@ -114,13 +122,13 @@ public class GameManager : MonoBehaviour
 
     private void Draw()
     {
-        if (SelectedBlocks.Count > 1)
-            UIManager.Instance.ShowPowers(SelectionLevel, GetConquerPoints()[CurrentPlayerId]);
+        UIManager.Instance.ShowPowers(SelectionLevel, SelectedBlocks.Count, GetConquerPoints()[CurrentPlayerId]);
 
         var indexesAlreadyModified = new List<int>();
         for (int i = 0; i < nb_players; i++)
-            foreach (var block in GetPositions(i))
+            foreach (var index in GetPositions(i))
             {
+                var block = Blocks[index];
                 bool neighborSelected = SelectedBlocks.Contains(block.myOwnIndex);
 
                 SetColor(block, GetColors()[i], PaintMode.onlyPawn);
@@ -128,12 +136,12 @@ public class GameManager : MonoBehaviour
                 indexesAlreadyModified.Add(block.myOwnIndex);
 
                 if (simulateNeighbors)
-                    foreach (var neighborIndex in block.NeighborsIndexes)
-                        if (Blocks[neighborIndex].ownerId == -1 && !indexesAlreadyModified.Contains(neighborIndex))
+                    foreach (var neighborIndex in block.GetExtendedNeighbors(Blocks))
+                        if (Blocks[neighborIndex].OwnerId == -1 && !indexesAlreadyModified.Contains(neighborIndex))
                         {
                             if (neighborSelected) indexesAlreadyModified.Add(neighborIndex);
                             Blocks[neighborIndex].SetColor(neighborSelected ? hoverColor : normalColor, true);
-                            Blocks[neighborIndex].canColor = !neighborSelected;
+                            Blocks[neighborIndex].SetColorState(!neighborSelected);
                         }
             }
     }
@@ -143,7 +151,7 @@ public class GameManager : MonoBehaviour
         CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
         var nbTurnToPass = GetPassTurns();
 
-        if (nbTurnToPass[CurrentPlayerId] > 0 || !GetPositions().Any(b => !IsBlockCircled(b)))
+        if (nbTurnToPass[CurrentPlayerId] > 0 || !GetPositions().Any(i => !IsBlockCircled(Blocks[i])))
         {
             nbTurnToPass[CurrentPlayerId] = Mathf.Max(nbTurnToPass[CurrentPlayerId] - 1, 0);
             NextPlayerTurn();
@@ -159,9 +167,9 @@ public class GameManager : MonoBehaviour
 
     private void Free(Block block, bool removeOwner = false)
     {
-        GetPositions(block.ownerId).Remove(block);
-        block.ownerId = -1;
-        block.Level = 0;
+        GetPositions(block.OwnerId).Remove(block.myOwnIndex);
+        block.SetOwnerId(-1);
+        block.SetLevel(0);
         block.Content.SetActive(false);
     }
 
@@ -179,16 +187,18 @@ public class GameManager : MonoBehaviour
             block.SetLevel(0);
         else
         {
-            if (block.ownerId >= 0) GetPositions(block.ownerId).Remove(block);
-            GetPositions().Add(block);
-            block.ownerId = CurrentPlayerId;
+            if (block.OwnerId >= 0)
+                GetPositions(block.OwnerId).Remove(block.myOwnIndex);
+
+            GetPositions().Add(block.myOwnIndex);
+            block.SetOwnerId(CurrentPlayerId);
         }
 
         if (recursive > 0)
             foreach (var blockId in block.NeighborsIndexes)
             {
                 var otherBlock = Blocks[blockId];
-                if (otherBlock.ownerId >= 0 && otherBlock.ownerId != CurrentPlayerId)
+                if (otherBlock.OwnerId >= 0 && otherBlock.OwnerId != CurrentPlayerId)
                 {
                     Conquer(otherBlock, recursive - 1);
                     GetConquerPoints()[CurrentPlayerId]++;
@@ -199,7 +209,11 @@ public class GameManager : MonoBehaviour
     private void UnSelect(Block block)
     {
         SelectedBlocks.Remove(block.myOwnIndex);
-        Draw();
+        var tempList = SelectedBlocks.ToList();
+        SelectedBlocks.Clear();
+
+        for (int i = 0; i < tempList.Count; i++)
+            Select(Blocks[tempList[i]]);
     }
 
     private void UnSelect()
@@ -211,10 +225,10 @@ public class GameManager : MonoBehaviour
     private void Select(Block block)
     {
         if (SelectedBlocks.Contains(block.myOwnIndex))
-            SelectedBlocks.Remove(block.myOwnIndex);
+            UnSelect(block);
         else
         {
-            if (SelectedBlocks.Count != 0 && !block.NeighborsIndexes.Contains(SelectedBlocks[SelectedBlocks.Count - 1]))
+            if (SelectedBlocks.Count != 0 && !Blocks[SelectedBlocks[SelectedBlocks.Count - 1]].NeighborsIndexes.Contains(block.myOwnIndex))
                 SelectedBlocks.Clear();
             SelectedBlocks.Add(block.myOwnIndex);
         }
@@ -273,8 +287,8 @@ public class GameManager : MonoBehaviour
 
                 if (Blocks.Count == 0 || Blocks.Count == terrainSize.y - 1 || Blocks.Count == maxSize - terrainSize.y || Blocks.Count == maxSize - 1)
                 {
-                    GetPositions().Add(block);
-                    block.ownerId = CurrentPlayerId;
+                    GetPositions().Add(Blocks.Count);
+                    block.SetOwnerId(CurrentPlayerId);
                     CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
                 }
 
@@ -328,8 +342,8 @@ public class GameManager : MonoBehaviour
 
                 if (Blocks.Count == 0 || Blocks.Count == terrainRay || (i == 0 && Mathf.Abs(j) == R) || Blocks.Count == maxSize - terrainRay - 1 || Blocks.Count == maxSize - 1)
                 {
-                    GetPositions().Add(block);
-                    block.ownerId = CurrentPlayerId;
+                    GetPositions().Add(Blocks.Count);
+                    block.SetOwnerId(CurrentPlayerId);
 
                     if (CurrentPlayerId == nb_players - 1 && player_Id_increment_to_set_alt_mode_start_positions == 1)
                         player_Id_increment_to_set_alt_mode_start_positions = -1;
@@ -390,8 +404,8 @@ public class GameManager : MonoBehaviour
 
                 if (Blocks.Count == 0 || Blocks.Count == thicknessLength - 1 || ((i + X == thresoldX || i + X == thresoldX + thickness - 10) && (j == -Y || j == Y - 10)) || Blocks.Count == maxSize - thicknessLength || Blocks.Count == maxSize - 1)
                 {
-                    GetPositions().Add(block);
-                    block.ownerId = CurrentPlayerId;
+                    GetPositions().Add(Blocks.Count);
+                    block.SetOwnerId(CurrentPlayerId);
                     CurrentPlayerId = (CurrentPlayerId + 1) % nb_players;
                 }
 
