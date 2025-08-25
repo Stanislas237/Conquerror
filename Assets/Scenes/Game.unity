@@ -382,6 +382,7 @@ GameObject:
   m_Component:
   - component: {fileID: 196507164}
   - component: {fileID: 196507165}
+  - component: {fileID: 196507166}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -419,13 +420,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e885b9db42858534eab7f044a4a1813f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverColor: {fileID: 2100000, guid: 33f1a38075793b4408a89bd33b19d4c4, type: 2}
-  myHoverColor: {fileID: 0}
-  normalColor: {fileID: 2100000, guid: a9cbf572860bd0e499500e2261eac540, type: 2}
-  nb_players: 3
-  alt_mode: 1
+  CurrentPlayerId: 0
+--- !u!114 &196507166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 196507163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9568f59da7c34524eb12bfcf831eb718, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nb_players: 4
+  alt_mode: 0
   simulateNeighbors: 1
-  terrainSize: {x: 15, y: 13}
+  terrainSize: {x: 10, y: 15}
   terrainRay: 4
 --- !u!1 &226152805
 GameObject:

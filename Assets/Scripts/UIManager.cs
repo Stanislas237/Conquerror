@@ -41,6 +41,7 @@ public class UIManager : MonoBehaviour
         var currScale = ConquerPointsBar.localScale;
         currScale.x = conquerPoints / 50f;
         ConquerPointsBar.localScale = currScale;
+        ConquerPointsBar.GetComponent<Image>().color = m.color;
 
         PlayerIndicator.material = m;
     }

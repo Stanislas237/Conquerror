@@ -42,6 +42,8 @@ public class Block : MonoBehaviour
         private set;
     } = true;
 
+    public bool IsCircled() => !NeighborsIndexes.Any(nId => GameManager.terrainManager.Blocks[nId].OwnerId == -1);
+
     public void SetLevel(int newLevel)
     {
         Level = newLevel;
