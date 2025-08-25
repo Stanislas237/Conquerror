@@ -9,7 +9,7 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance;
     private Camera mainCamera;
     private List<Block> blocksToShowLevels = new();
-    public Action Fusion;
+    public Action<string> Fusion;
 
     [SerializeField]
     private Transform ConquerPointsBar;
@@ -33,7 +33,7 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         foreach (Transform t in PowersParent)
-            t.GetComponent<Button>().onClick.AddListener(() => Fusion?.Invoke());
+            t.GetComponent<Button>().onClick.AddListener(() => Fusion?.Invoke(t.name[1..]));
     }
 
     public void ShowPlayerUI(int conquerPoints, Material m)

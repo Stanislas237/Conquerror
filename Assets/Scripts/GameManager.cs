@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
 
         new DataManager();
+        new PowerManager();
     }
 
     private void Start()
@@ -43,8 +44,6 @@ public class GameManager : MonoBehaviour
 
         UIManager.Instance.Fusion = Fusion;
     }
-
-    #region Block Management Handlers
     
     public void OnBlockEnter(Block block)
     {
@@ -69,21 +68,13 @@ public class GameManager : MonoBehaviour
             block.SetColor(DataManager.normalColor);
     }
 
-    #endregion
-
-
-    #region Player Datas Getters
-
-
-    #endregion
-
-
-    #region Game Management And Status Methods
-
     private void NextPlayerTurn()
     {
         CurrentPlayerId = (CurrentPlayerId + 1) % terrainManager.nb_players;
         var nbTurnToPass = DataManager.GetPassTurns();
+
+        if (CurrentPlayerId == 0)
+            PowerManager.Instance.DecrementAllNbTurns();
 
         if (nbTurnToPass[CurrentPlayerId] > 0 || !DataManager.GetPositions().Any(i => !Blocks[i].IsCircled()))
         {
@@ -93,11 +84,6 @@ public class GameManager : MonoBehaviour
         else
             UIManager.Instance.ShowPlayerUI(DataManager.GetConquerPoints()[CurrentPlayerId], DataManager.GetColors()[CurrentPlayerId]);
     }
-
-    #endregion
-
-
-    #region Player Actions Methods
 
     private void Free(Block block)
     {
@@ -117,7 +103,9 @@ public class GameManager : MonoBehaviour
 
     private void Conquer(Block block, int recursive)
     {
-        if (block.Level > 0)
+        if (!block.Active)
+            return;
+        else if (block.Level > 0)
             block.SetLevel(0);
         else
         {
@@ -169,7 +157,7 @@ public class GameManager : MonoBehaviour
         terrainManager.Draw();
     }
 
-    private void Fusion()
+    private void Fusion(string powerName)
     {
         var LevelTartget = SelectionLevel - 1;
         var tempList = SelectedBlocks.ToList();
@@ -179,16 +167,9 @@ public class GameManager : MonoBehaviour
             Free(Blocks[tempList[i]]);
         var block = Blocks[tempList[tempList.Count - 1]];
         block.SetLevel(LevelTartget);
+        PowerManager.Instance.EnablePower(block, powerName);
         NextPlayerTurn();
     }
-
-    #endregion
-
-
-    #region Terrain Generation Methods
-
-    
-    #endregion
 }
 
 public enum PaintMode { onlyBlock, onlyPawn, all }

@@ -433,7 +433,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9568f59da7c34524eb12bfcf831eb718, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nb_players: 4
+  nb_players: 3
   alt_mode: 0
   simulateNeighbors: 1
   terrainSize: {x: 10, y: 15}
