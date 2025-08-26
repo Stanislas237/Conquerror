@@ -96,11 +96,13 @@ public class UIManager : MonoBehaviour
             blocksToShowLevels.Add(block);
     }
 
-    public void ShowPowers(int selectLevelCount, int nbBlocks, int conquerPoints)
+    public void ShowPowers(bool hasAtLeastOneNotCircled)
     {
-        int requiredPoints = selectLevelCount >= 5 ? 50 : (selectLevelCount - 1) * 10;
+        int selectLevelCount = GameManager.Instance.SelectionLevel, conquerPoints = DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId],
+        nbBlocks = GameManager.Instance.SelectedBlocks.Count, requiredPoints = selectLevelCount >= 5 ? 50 : (selectLevelCount - 1) * 10;
+
         foreach (Transform t in PowersParent)
-            t.gameObject.SetActive(nbBlocks > 1 && conquerPoints >= requiredPoints && t.name.Contains((selectLevelCount - 1).ToString()));
+            t.gameObject.SetActive(nbBlocks > 1 && conquerPoints >= requiredPoints && t.name.Contains((selectLevelCount - 1).ToString()) && hasAtLeastOneNotCircled);
     }
 
     public void RefreshLevels()

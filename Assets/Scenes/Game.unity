@@ -756,7 +756,7 @@ MonoBehaviour:
   nb_players: 4
   alt_mode: 0
   simulateNeighbors: 1
-  terrainSize: {x: 15, y: 18}
+  terrainSize: {x: 10, y: 15}
   terrainRay: 4
 --- !u!1 &226152805
 GameObject:
@@ -1845,7 +1845,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &486104060
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2244,7 +2244,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &618589564
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6174,7 +6174,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1729782687
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6429,7 +6429,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1787009249
 RectTransform:
   m_ObjectHideFlags: 0

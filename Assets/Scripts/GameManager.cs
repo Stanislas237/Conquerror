@@ -68,11 +68,9 @@ public class GameManager : MonoBehaviour
     private void NextPlayerTurn()
     {
         CurrentPlayerId = (CurrentPlayerId + 1) % terrainManager.nb_players;
+        PowerManager.Instance.DecrementAllNbTurns();
+
         var nbTurnToPass = DataManager.GetPassTurns();
-
-        if (CurrentPlayerId == 0)
-            PowerManager.Instance.DecrementAllNbTurns();
-
         if (nbTurnToPass[CurrentPlayerId] > 0 || !DataManager.GetPositions().Any(i => !Blocks[i].IsCircled()))
         {
             nbTurnToPass[CurrentPlayerId] = Mathf.Max(nbTurnToPass[CurrentPlayerId] - 1, 0);
@@ -86,7 +84,7 @@ public class GameManager : MonoBehaviour
     {
         DataManager.GetPositions(block.OwnerId).Remove(block.myOwnIndex);
         block.SetOwnerId(-1);
-        block.SetLevel(0);
+        PowerManager.Instance.DisableAllPowers(block);
         block.Content.SetActive(false);
     }
 
@@ -103,7 +101,7 @@ public class GameManager : MonoBehaviour
         if (!block.Active)
             return;
         else if (block.Level > 0)
-            block.SetLevel(0);
+            PowerManager.Instance.DisableAllPowers(block);
         else
         {
             if (block.OwnerId >= 0)
@@ -168,5 +166,3 @@ public class GameManager : MonoBehaviour
         NextPlayerTurn();
     }
 }
-
-public enum PaintMode { onlyBlock, onlyPawn, all }

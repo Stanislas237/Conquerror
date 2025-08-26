@@ -30,7 +30,19 @@ public class PowerManager
 
         if (!Datas.ContainsKey(block.myOwnIndex))
             Datas[block.myOwnIndex] = new();
-        Datas[block.myOwnIndex][powerName] = nbTours;
+        Datas[block.myOwnIndex][powerName] = nbTours * GameManager.terrainManager.nb_players;
+    }
+
+    public void DisableAllPowers(Block block)
+    {
+        block.SetLevel(0);
+        
+        if (!Datas.ContainsKey(block.myOwnIndex))
+            return;
+
+        foreach (var powerName in new List<string>(Datas[block.myOwnIndex].Keys))
+            DisablePower(block, powerName);
+        Datas.Remove(block.myOwnIndex);
     }
 
     private void DisablePower(Block block, string powerName)
@@ -44,8 +56,6 @@ public class PowerManager
                 block.SetMoveRange(1);
                 break;
         }
-
-        block.SetLevel(0);
     }
 
     public void DecrementAllNbTurns()
@@ -69,7 +79,9 @@ public class PowerManager
             if (Datas[couple.id].Count == 0)
                 Datas.Remove(couple.id);
 
-            DisablePower(GameManager.terrainManager.Blocks[couple.id], couple.nom);
+            var block = GameManager.terrainManager.Blocks[couple.id];
+            DisablePower(block, couple.nom);
+            block.SetLevel(0);
         }
     }
 }

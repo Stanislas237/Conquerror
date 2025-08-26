@@ -37,9 +37,9 @@ public class TerrainManager : MonoBehaviour
 
     public void Draw()
     {
-        UIManager.Instance.ShowPowers(GameManager.Instance.SelectionLevel, GameManager.Instance.SelectedBlocks.Count, DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId]);
+        UIManager.Instance.ShowPowers(GameManager.Instance.SelectedBlocks.Any(i => !Blocks[i].IsCircled()));
 
-        var indexesAlreadyModified = new List<int>();
+        var indexesAlreadyModified = new HashSet<int>();
         for (int i = 0; i < nb_players; i++)
             foreach (var index in DataManager.GetPositions(i))
             {
@@ -229,3 +229,5 @@ public class TerrainManager : MonoBehaviour
             }
     }
 }
+
+public enum PaintMode { onlyBlock, onlyPawn, all }
