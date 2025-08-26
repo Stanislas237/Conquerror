@@ -38,10 +38,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-
         terrainManager.GenerateBlocks();
-        NextPlayerTurn();
-
         UIManager.Instance.Fusion = Fusion;
     }
     
@@ -82,7 +79,7 @@ public class GameManager : MonoBehaviour
             NextPlayerTurn();
         }
         else
-            UIManager.Instance.ShowPlayerUI(DataManager.GetConquerPoints()[CurrentPlayerId], DataManager.GetColors()[CurrentPlayerId]);
+            UIManager.Instance.ShowPlayerUI();
     }
 
     private void Free(Block block)

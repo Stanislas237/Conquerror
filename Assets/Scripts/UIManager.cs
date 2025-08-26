@@ -12,13 +12,11 @@ public class UIManager : MonoBehaviour
     public Action<string> Fusion;
 
     [SerializeField]
-    private Transform ConquerPointsBar;
-    [SerializeField]
     private Transform LevelTextPrefab;
     [SerializeField]
     private Transform PowersParent;
     [SerializeField]
-    private MeshRenderer PlayerIndicator;
+    private Transform PlayerUIsParent;
 
     private void Awake()
     {
@@ -32,18 +30,58 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        for (int i = 0; i < GameManager.terrainManager.nb_players; i++)
+        {
+            var ui = PlayerUIsParent.GetChild(i);
+            var color = DataManager.GetColors()[i].color;
+            var text = ui.GetChild(2).GetComponent<TextMeshProUGUI>();
+            var p_text = ui.GetChild(3).GetComponent<TextMeshProUGUI>();
+            ui.gameObject.SetActive(true);
+            ui.GetChild(0).GetComponent<Image>().color = color;
+            ui.GetChild(1).GetChild(1).GetComponent<Image>().color = color;
+            text.color = p_text.color = color;
+            text.text = $"Player {i + 1}";
+        }
+        ShowPlayerUI();
+
         foreach (Transform t in PowersParent)
             t.GetComponent<Button>().onClick.AddListener(() => Fusion?.Invoke(t.name[1..]));
     }
 
-    public void ShowPlayerUI(int conquerPoints, Material m)
+    private void UpdateConquestPointsUI(int index)
     {
+        var ConquerPointsBar = PlayerUIsParent.GetChild(index).GetChild(1).GetChild(1);
         var currScale = ConquerPointsBar.localScale;
-        currScale.x = conquerPoints / 50f;
+        currScale.y = DataManager.GetConquerPoints()[index] / 50f;
         ConquerPointsBar.localScale = currScale;
-        ConquerPointsBar.GetComponent<Image>().color = m.color;
+    }
 
-        PlayerIndicator.material = m;
+    private void UpdatePercentageText(int index)
+    {
+        var ConquestPercentage = DataManager.GetPositions(index).Count * 100f / GameManager.terrainManager.Blocks.Count;
+        PlayerUIsParent.GetChild(index).GetChild(3).GetComponent<TextMeshProUGUI>().text = $"{ConquestPercentage:F1} %";
+    }
+
+    public void ShowPlayerUI()
+    {
+        var CurrPlayer = GameManager.Instance.CurrentPlayerId;
+
+        for (int i = 0; i < GameManager.terrainManager.nb_players; i++)
+        {
+            var ui = PlayerUIsParent.GetChild(i).gameObject;
+            if (ui.activeSelf)
+            {
+                UpdateConquestPointsUI(i);
+                UpdatePercentageText(i);
+
+                foreach (var img in ui.GetComponentsInChildren<Image>())
+                {
+                    var currColor = img.color;
+                    currColor.a = i == CurrPlayer ? 1 : 0.3f;
+                    img.color = currColor;
+                }
+            }
+        }
     }
 
     public void ShowBlockLevel(Block block)
