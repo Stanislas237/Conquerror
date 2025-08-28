@@ -10,8 +10,17 @@ public class Block : MonoBehaviour
     private MeshRenderer mr;
     public GameObject Content;
 
+    public HashSet<string> Powers = new();
+    public string PowerDisplay = string.Empty;
+
 
     // Etat du bloc, pouvoirs...
+    public bool Active
+    {
+        get;
+        private set;
+    } = true;
+
     public int Level
     {
         get;
@@ -23,14 +32,14 @@ public class Block : MonoBehaviour
         get;
         private set;
     } = -1;
-
-    public bool Active
+    
+    public int MoveRange
     {
         get;
         private set;
-    } = true;
-    
-    public int MoveRange
+    } = 1;
+
+    public int ConquerRange
     {
         get;
         private set;
@@ -56,6 +65,8 @@ public class Block : MonoBehaviour
     public void SetActive(bool active) => Active = active;
 
     public void SetMoveRange(int newRange) => MoveRange = newRange;
+
+    public void SetConquerRange(int newRange) => ConquerRange = newRange;
 
     public void SetColorState(bool canColor) => CanColor = canColor;
 
@@ -98,7 +109,21 @@ public class Block : MonoBehaviour
         return extendedNeighbors;
     }
 
-    private void OnMouseEnter() => GameManager.Instance.OnBlockEnter(this);
-    private void OnMouseExit() => GameManager.Instance.OnBlockExit(this);
-    private void OnMouseDown() => GameManager.Instance.OnBlockDown(this);
+    private void OnMouseEnter()
+    {
+        if (Active)
+            GameManager.Instance.OnBlockEnter(this);
+    }
+
+    private void OnMouseExit()
+    {
+        if (Active)
+            GameManager.Instance.OnBlockExit(this);
+    }
+
+    private void OnMouseDown()
+    {
+        if (Active)
+        GameManager.Instance.OnBlockDown(this);
+    }
 }

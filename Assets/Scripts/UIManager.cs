@@ -1,5 +1,6 @@
 using TMPro;
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ public class UIManager : MonoBehaviour
     private Camera mainCamera;
     private List<Block> blocksToShowLevels = new();
     public Action<string> Fusion;
+    public bool JustAssignPower = false;
 
     [SerializeField]
     private Transform LevelTextPrefab;
@@ -45,7 +47,11 @@ public class UIManager : MonoBehaviour
         ShowPlayerUI();
 
         foreach (Transform t in PowersParent)
-            t.GetComponent<Button>().onClick.AddListener(() => Fusion?.Invoke(t.name[1..]));
+            t.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                if (JustAssignPower)
+                Fusion?.Invoke(t.name[1..]);
+            });
     }
 
     private void UpdateConquestPointsUI(int index)
@@ -84,12 +90,19 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void AskMessageToPlayer(string message)
+    {
+        ShowPowers(false);
+        // Afficher le message à l'utilisateur
+        Debug.Log($"Message to Player: {message}");
+    }
+
     public void ShowBlockLevel(Block block)
     {
         var prefab = LevelTextPrefab.parent.Find($"LevelPrefabForId {block.myOwnIndex}") ?? Instantiate(LevelTextPrefab, LevelTextPrefab.parent);
         prefab.SetLocalPositionAndRotation(ScreenToCanvasPosition(mainCamera.WorldToScreenPoint(block.Content.transform.position + Vector3.up * 4f)), Quaternion.identity);
         prefab.name = $"LevelPrefabForId {block.myOwnIndex}";
-        prefab.GetComponent<TextMeshProUGUI>().text = block.Level.ToString();
+        prefab.GetComponent<TextMeshProUGUI>().text = block.Level + block.PowerDisplay;
         prefab.gameObject.SetActive(block.Level > 0);
 
         if (!blocksToShowLevels.Contains(block))
@@ -102,7 +115,14 @@ public class UIManager : MonoBehaviour
         nbBlocks = GameManager.Instance.SelectedBlocks.Count, requiredPoints = selectLevelCount >= 5 ? 50 : (selectLevelCount - 1) * 10;
 
         foreach (Transform t in PowersParent)
-            t.gameObject.SetActive(nbBlocks > 1 && conquerPoints >= requiredPoints && t.name.Contains((selectLevelCount - 1).ToString()) && hasAtLeastOneNotCircled);
+        {
+            var shouldShow = hasAtLeastOneNotCircled && nbBlocks > 1 && conquerPoints >= requiredPoints && t.name[..1] == (selectLevelCount - 1).ToString();
+            if (t.name == "2Contagion")
+                shouldShow &= DataManager.GetNbContagions()[GameManager.Instance.CurrentPlayerId] < DataManager.MaxNbUseOfContagion
+                && GameManager.terrainManager.Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => !new int[2] { -1, GameManager.Instance.CurrentPlayerId }.Contains(GameManager.terrainManager.Blocks[blockId].OwnerId));
+
+            t.gameObject.SetActive(shouldShow);
+        }
     }
 
     public void RefreshLevels()
