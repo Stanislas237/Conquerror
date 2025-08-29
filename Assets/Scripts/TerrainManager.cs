@@ -51,8 +51,8 @@ public class TerrainManager : MonoBehaviour
                 indexesAlreadyModified.Add(block.myOwnIndex);
 
                 if (simulateNeighbors)
-                    foreach (var neighborIndex in block.GetExtendedNeighbors(Blocks))
-                        if (Blocks[neighborIndex].OwnerId == -1 && !indexesAlreadyModified.Contains(neighborIndex))
+                    foreach (var neighborIndex in block.GetExtendedNeighbors())
+                        if (Blocks[neighborIndex].IsEmpty() && !indexesAlreadyModified.Contains(neighborIndex))
                         {
                             if (neighborSelected) indexesAlreadyModified.Add(neighborIndex);
                             Blocks[neighborIndex].SetColor(neighborSelected ? DataManager.GetColors()[i] : DataManager.normalColor, true);

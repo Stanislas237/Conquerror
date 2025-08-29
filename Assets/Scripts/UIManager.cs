@@ -9,6 +9,8 @@ using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
+    private List<Block> Blocks => GameManager.terrainManager.Blocks;
+
     public static UIManager Instance;
     private Camera mainCamera;
     private List<Block> blocksToShowLevels = new();
@@ -19,6 +21,10 @@ public class UIManager : MonoBehaviour
     private Transform PowersParent;
     [SerializeField]
     private Transform PlayerUIsParent;
+    [SerializeField]
+    private Image NextButtonImage;
+    [SerializeField]
+    private TextMeshProUGUI TextMeshMessage;
 
     // Sélection d'un pouvoir pour la contagion
     private int specialSelectionLevel = 0;
@@ -83,13 +89,14 @@ public class UIManager : MonoBehaviour
 
     private void UpdatePercentageText(int index)
     {
-        var ConquestPercentage = DataManager.GetPositions(index).Count * 100f / GameManager.terrainManager.Blocks.Count;
+        var ConquestPercentage = DataManager.GetPositions(index).Count * 100f / Blocks.Count;
         PlayerUIsParent.GetChild(index).GetChild(3).GetComponent<TextMeshProUGUI>().text = $"{ConquestPercentage:F1} %";
     }
 
     public void ShowPlayerUI()
     {
         var CurrPlayer = GameManager.Instance.CurrentPlayerId;
+        NextButtonImage.color = DataManager.GetColors()[CurrPlayer].color;
 
         for (int i = 0; i < GameManager.terrainManager.nb_players; i++)
         {
@@ -114,7 +121,11 @@ public class UIManager : MonoBehaviour
         ShowPowers(false);
         // Afficher le message à l'utilisateur
         Debug.Log($"Message to Player: {message}");
+        TextMeshMessage.text = message;
+        TextMeshMessage.color = DataManager.GetColors()[GameManager.Instance.CurrentPlayerId].color;
     }
+
+    public void ClearMessage() => TextMeshMessage.text = string.Empty;
 
     public void ShowBlockLevel(Block block)
     {
@@ -152,7 +163,10 @@ public class UIManager : MonoBehaviour
             var shouldShow = hasAtLeastOneNotCircled && nbBlocks > 1 && conquerPoints >= requiredPoints && t.name[..1] == (selectLevelCount - 1).ToString();
             if (t.name == "2Contagion" && shouldShow)
                 shouldShow &= DataManager.GetNbContagions()[GameManager.Instance.CurrentPlayerId] < DataManager.MaxNbUseOfContagion &&
-                GameManager.terrainManager.Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => !new int[2] { -1, GameManager.Instance.CurrentPlayerId }.Contains(GameManager.terrainManager.Blocks[blockId].OwnerId));
+                Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => Blocks[blockId].IsOpponent() && Blocks[blockId].IsCurrentlyPlayable());
+
+            if (t.name == "3Téléportation")
+                shouldShow &= Blocks.Any(block => block.IsEmpty() && block.IsCurrentlyPlayable());
 
             t.gameObject.SetActive(shouldShow);
         }

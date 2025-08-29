@@ -57,6 +57,7 @@ public class GameManager : MonoBehaviour
     
     public void OnBlockEnter(Block block)
     {
+        // Sélection spéciale
         if (SpecialSelectionList != null)
         {
             if (SpecialSelectionList.Contains(block))
@@ -64,18 +65,25 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // En attente d'Input
         if (gameState == GameState.Waiting)
             return;
 
+        // Si un bouclier est actif
+        if (!block.IsCurrentlyPlayable())
+            return;
+
+        // Hover normal
         if (!SelectedBlocks.Contains(block.myOwnIndex))
             if (block.OwnerId == CurrentPlayerId)
                 block.SetColor(DataManager.GetHoverColors()[CurrentPlayerId]);
-            else if (block.OwnerId == -1 && DataManager.GetPositions().Any(i => Blocks[i].HasNeighbor(Blocks, block.myOwnIndex, Blocks[i].MoveRange)))
+            else if (block.IsEmpty() && DataManager.GetPositions().Any(i => Blocks[i].HasNeighbor(block.myOwnIndex, Blocks[i].MoveRange)))
                 block.SetColor(DataManager.GetColors()[CurrentPlayerId]);
     }
 
     public void OnBlockDown(Block block)
     {
+        // Sélection spéciale
         if (SpecialSelectionList != null)
         {
             if (SpecialSelectionList.Contains(block))
@@ -86,28 +94,41 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // En attente d'Input
         if (gameState == GameState.Waiting)
             return;
 
+        // Si un bouclier est actif
+        if (!block.IsCurrentlyPlayable())
+            return;
+
+        // Clic normal
         if (block.OwnerId == CurrentPlayerId)
             Select(block);
-        else if (block.OwnerId == -1 && DataManager.GetPositions().Any(i => Blocks[i].HasNeighbor(Blocks, block.myOwnIndex, Blocks[i].MoveRange)))
+        else if (block.IsEmpty() && DataManager.GetPositions().Any(i => Blocks[i].HasNeighbor(block.myOwnIndex, Blocks[i].MoveRange)))
             Conquer(block);
     }
 
     public void OnBlockExit(Block block)
     {
+        // Sélection spéciale
         if (SpecialSelectionList != null)
             block.SetColor(DataManager.normalColor);
 
+        // En attente d'Input
         if (gameState == GameState.Waiting)
             return;
 
-        if (!SelectedBlocks.Contains(block.myOwnIndex) && ((block.OwnerId == CurrentPlayerId) || (block.OwnerId == -1 && DataManager.GetPositions().Any(i => Blocks[i].HasNeighbor(Blocks, block.myOwnIndex, Blocks[i].MoveRange)))))
+        // Si un bouclier est actif
+        if (!block.IsCurrentlyPlayable())
+            return;
+
+        // Exit normal
+        if (!SelectedBlocks.Contains(block.myOwnIndex) && ((block.OwnerId == CurrentPlayerId) || (block.IsEmpty() && DataManager.GetPositions().Any(i => Blocks[i].HasNeighbor(block.myOwnIndex, Blocks[i].MoveRange)))))
             block.SetColor(DataManager.normalColor);
     }
 
-    private void NextPlayerTurn()
+    public void NextPlayerTurn()
     {
         CurrentPlayerId = (CurrentPlayerId + 1) % terrainManager.nb_players;
         PowerManager.Instance.DecrementAllNbTurns();
@@ -142,7 +163,7 @@ public class GameManager : MonoBehaviour
 
     private void Conquer(Block block, int recursive)
     {
-        if (!block.Active || block.Powers.Contains("Gel") || block.Powers.Contains("Bouclier") || block.Powers.Contains("Résistance"))
+        if (!block.Active || block.Powers.Contains("Gel") || !block.IsCurrentlyPlayable() || block.Powers.Contains("Résistance"))
             return;
 
         else if (block.Level > 0)

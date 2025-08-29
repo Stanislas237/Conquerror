@@ -4,17 +4,23 @@ using System.Collections.Generic;
 
 public class Block : MonoBehaviour
 {
-    // Caractéristiques principales
+    private List<Block> Blocks => GameManager.terrainManager.Blocks;
+
+    // Données propres au bloc
     public HashSet<int> NeighborsIndexes = new();
+
     public int myOwnIndex = -1;
+    
     private MeshRenderer mr;
+    
     public GameObject Content;
 
     public List<string> Powers = new();
+    
     public string PowerDisplay = string.Empty;
 
 
-    // Etat du bloc, pouvoirs...
+    // Caractéristiques principales
     public bool Active
     {
         get;
@@ -51,8 +57,10 @@ public class Block : MonoBehaviour
         private set;
     } = true;
 
-    public bool IsCircled() => !NeighborsIndexes.Any(nId => GameManager.terrainManager.Blocks[nId].OwnerId == -1);
 
+
+
+    // Setters
     public void SetLevel(int newLevel)
     {
         Level = newLevel;
@@ -83,10 +91,18 @@ public class Block : MonoBehaviour
         Content.GetComponent<MeshRenderer>().material = m;
     }
 
-    public bool HasNeighbor(List<Block> Blocks, int blockId, int moveRange) => NeighborsIndexes.Contains(blockId) ||
-        (moveRange > 1 && NeighborsIndexes.Any(i => Blocks[i].HasNeighbor(Blocks, blockId, moveRange - 1)));
+    public void ClearPowers()
+    {
+        foreach (var p in Powers.ToList())
+            if (!p.Contains("Bouclier"))
+                Powers.Remove(p);
+        PowerDisplay = string.Empty;
+    }
 
-    public HashSet<int> GetExtendedNeighbors(List<Block> Blocks)
+
+
+    // Getters
+    public HashSet<int> GetExtendedNeighbors()
     {
         var extendedNeighbors = new HashSet<int>(NeighborsIndexes);
         var currentNeighbors = new HashSet<int>(NeighborsIndexes);
@@ -108,6 +124,20 @@ public class Block : MonoBehaviour
 
         return extendedNeighbors;
     }
+
+
+
+    // States
+    public bool IsEmpty() => OwnerId == -1;
+
+    public bool IsCircled() => !NeighborsIndexes.Any(nId => GameManager.terrainManager.Blocks[nId].IsEmpty());
+
+    public bool HasNeighbor(int blockId, int moveRange) => NeighborsIndexes.Contains(blockId) ||
+        (moveRange > 1 && NeighborsIndexes.Any(i => Blocks[i].HasNeighbor(blockId, moveRange - 1)));    
+
+    public bool IsCurrentlyPlayable() => !Powers.Contains("Bouclier") || Powers.Contains("Bouclier" + GameManager.Instance.CurrentPlayerId);
+
+    public bool IsOpponent() => OwnerId != -1 && OwnerId != GameManager.Instance.CurrentPlayerId;
 
     private void OnMouseEnter()
     {
