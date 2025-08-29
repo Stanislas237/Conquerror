@@ -52,9 +52,20 @@ public class PowerManager
                 }
                 break;
             case "Capture":
-                block.SetConquerRange(2);
-                Conquer?.Invoke(block, false);
-                block.SetConquerRange(1);
+                block.SetMoveRange(2);
+                var ExtendedNeighbors = block.GetExtendedNeighbors();
+                block.SetMoveRange(1);
+
+                foreach (var blockId in ExtendedNeighbors)
+                {
+                    var neighborBlock = Blocks[blockId];
+                    if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
+                    {
+                        neighborBlock.SetConquerRange(0);
+                        Conquer?.Invoke(neighborBlock, false);
+                        neighborBlock.SetConquerRange(1);
+                    }
+                }
                 break;
             case "Contagion":
                 DataManager.GetNbContagions()[GameManager.Instance.CurrentPlayerId]++;
@@ -101,7 +112,7 @@ public class PowerManager
                 block.PowerDisplay = "BouclierDeZone";
                 
                 block.SetMoveRange(3);
-                var ExtendedNeighbors = block.GetExtendedNeighbors();
+                ExtendedNeighbors = block.GetExtendedNeighbors();
                 block.SetMoveRange(1);
 
                 foreach (var blockId in ExtendedNeighbors)
@@ -128,24 +139,47 @@ public class PowerManager
                 TotalTurnsForCombo = 0;
                 
                 UIManager.Instance.AskMessageToPlayer("Sélectionnez un 1er pouvoir pour le bloc transformé.");
-                var level3PowerName = await UIManager.Instance.WaitForPowerSelectionAsync(3);
+                var level3PowerName1 = await UIManager.Instance.WaitForPowerSelectionAsync(3);
                 UIManager.Instance.ClearMessage();
 
-                await EnablePower(block, level3PowerName);
+                await EnablePower(block, level3PowerName1);
                 
                 UIManager.Instance.AskMessageToPlayer("Sélectionnez un 2e pouvoir pour le bloc transformé.");
-                level3PowerName = await UIManager.Instance.WaitForPowerSelectionAsync(3);
+                var level3PowerName2 = await UIManager.Instance.WaitForPowerSelectionAsync(3);
                 UIManager.Instance.ClearMessage();
 
                 if (TeleportedAt != null)
                     block = TeleportedAt;
-                await EnablePower(block, level3PowerName);
+                
+                await EnablePower(block, level3PowerName2);
+
+                if (TeleportedAt != null)
+                    block = TeleportedAt;
+
+                if (level3PowerName1 == "Bouclier" && level3PowerName2 == "Téléportation")
+                    await EnablePower(block, level3PowerName1);
 
                 block.SetLevel(4);
                 block.PowerDisplay = "Combo";
                 nbTours = TotalTurnsForCombo;
 
                 GameManager.Instance.ResetGameState();                
+                break;
+            case "Domination":
+                block.SetMoveRange(3);
+                ExtendedNeighbors = block.GetExtendedNeighbors();
+                block.SetMoveRange(1);
+
+                foreach (var blockId in ExtendedNeighbors)
+                {
+                    var neighborBlock = Blocks[blockId];
+                    if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
+                    {
+                        neighborBlock.SetConquerRange(0);
+                        Conquer?.Invoke(neighborBlock, false);
+                        neighborBlock.SetConquerRange(1);
+                    }
+                }
                 break;
         }
         UIManager.Instance.ShowPowers(false);

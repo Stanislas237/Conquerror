@@ -69,7 +69,6 @@ public class UIManager : MonoBehaviour
         foreach (Transform t in PowersParent)
             t.GetComponent<Button>().onClick.AddListener(async () =>
             {
-                Debug.Log("Special : " + specialSelectionLevel);
                 if (specialSelectionLevel != 0)
                 {
                     _powerSelectionSource.SetResult(t.name[1..]);
@@ -91,6 +90,11 @@ public class UIManager : MonoBehaviour
     private void UpdatePercentageText(int index)
     {
         var ConquestPercentage = DataManager.GetPositions(index).Count * 100f / Blocks.Count;
+
+        // Condition de victoire
+        if (ConquestPercentage >= 60)
+            GameManager.Instance.EndGame(index);
+
         PlayerUIsParent.GetChild(index).GetChild(3).GetComponent<TextMeshProUGUI>().text = $"{ConquestPercentage:F1} %";
     }
 
@@ -123,7 +127,7 @@ public class UIManager : MonoBehaviour
         // Afficher le message à l'utilisateur
         Debug.Log($"Message to Player: {message}");
         TextMeshMessage.text = message;
-        TextMeshMessage.color = DataManager.GetColors()[GameManager.Instance.CurrentPlayerId].color;
+        TextMeshMessage.color = DataManager.GetHoverColors()[GameManager.Instance.CurrentPlayerId].color;
     }
 
     public void ClearMessage() => TextMeshMessage.text = string.Empty;
@@ -147,7 +151,7 @@ public class UIManager : MonoBehaviour
         textMesh.text = text;
     }
 
-    private int GetRequiredPoints(int Level) => Level = (Level >= 5) ? 50 : (Level - 1) * 10;
+    public int GetRequiredPoints(int Level) => Level = (Level >= 5) ? 50 : (Level - 1) * 10;
 
     public void ShowPowers(bool hasAtLeastOneNotCircled)
     {

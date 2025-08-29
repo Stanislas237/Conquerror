@@ -13,7 +13,7 @@ public class DataManager
     private readonly Dictionary<string, object> PlayerDatas = new()
     {
         { "playersPositions", new HashSet<int>[4] { new(), new(), new(), new() }},
-        { "conquerPoints", new int[4] {50, 50, 50, 50} },
+        { "conquerPoints", new int[4] },
         { "PlayerColors", new Material[4] },
         { "PlayerHoverColors", new Material[4] },
         { "nbTurnToPass", new int[4] },
@@ -33,6 +33,29 @@ public class DataManager
 
     public static HashSet<int> GetPositions(int i) => ((HashSet<int>[])Instance.PlayerDatas["playersPositions"])[i];
     public static HashSet<int> GetPositions() => GetPositions(GameManager.Instance.CurrentPlayerId);
+
+    public static int GetNbPositionsOccuped()
+    {
+        var Positions = (HashSet<int>[])Instance.PlayerDatas["playersPositions"];
+        int totalNbPositions = 0;
+        foreach (var p in Positions)
+            totalNbPositions += p.Count;
+        return totalNbPositions;
+    }
+
+    public static int GetTheLongerPostitionsList()
+    {
+        int maxIndex = -1, maxCount = -1;
+        var Positions = (HashSet<int>[])Instance.PlayerDatas["playersPositions"];
+        for (int i = 0; i < Positions.Length; i++)
+            if (Positions[i].Count > maxCount)
+            {
+                maxCount = Positions[i].Count;
+                maxIndex = i;
+            }
+        
+        return maxIndex;
+    }
 
     public static int[] GetPassTurns() => (int[])Instance.PlayerDatas["nbTurnToPass"];
 

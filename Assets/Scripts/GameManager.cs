@@ -137,6 +137,12 @@ public class GameManager : MonoBehaviour
         CurrentPlayerId = (CurrentPlayerId + 1) % terrainManager.nb_players;
         PowerManager.Instance.DecrementAllNbTurns();
 
+        if (DataManager.GetNbPositionsOccuped() >= Blocks.Count)
+        {
+            GameManager.Instance.EndGame(DataManager.GetTheLongerPostitionsList());
+            return;
+        }
+
         var nbTurnToPass = DataManager.GetPassTurns();
         if (nbTurnToPass[CurrentPlayerId] > 0 || !DataManager.GetPositions().Any(i => !Blocks[i].IsCircled()))
         {
@@ -150,8 +156,8 @@ public class GameManager : MonoBehaviour
     public void Free(Block block)
     {
         DataManager.GetPositions(block.OwnerId).Remove(block.myOwnIndex);
-        block.SetOwnerId(-1);
         PowerManager.Instance.DisableAllPowers(block);
+        block.SetOwnerId(-1);
         block.Content.SetActive(false);
     }
 
@@ -225,6 +231,7 @@ public class GameManager : MonoBehaviour
 
     public async Task Fusion(string powerName)
     {
+        DataManager.GetConquerPoints()[CurrentPlayerId] -= UIManager.Instance.GetRequiredPoints(SelectionLevel);
         var LevelTartget = SelectionLevel - 1;
         var tempList = SelectedBlocks.ToList();
         UnSelect();
@@ -237,5 +244,12 @@ public class GameManager : MonoBehaviour
         await PowerManager.Instance.EnablePower(block, powerName);
         DataManager.GetConquerPoints()[CurrentPlayerId] += 2;
         NextPlayerTurn();
+    }
+
+    public void EndGame(int winnerId)
+    {
+        PauseGameState();
+        CurrentPlayerId = winnerId;
+        UIManager.Instance.AskMessageToPlayer($"Player {winnerId + 1} a gagné !");
     }
 }

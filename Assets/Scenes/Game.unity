@@ -832,7 +832,7 @@ MonoBehaviour:
   alt_mode: 0
   simulateNeighbors: 1
   terrainSize: {x: 10, y: 15}
-  terrainRay: 4
+  terrainRay: 3
 --- !u!1 &226152805
 GameObject:
   m_ObjectHideFlags: 0
@@ -1159,7 +1159,7 @@ MonoBehaviour:
   m_enableAutoSizing: 1
   m_fontSizeMin: 35
   m_fontSizeMax: 40
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
