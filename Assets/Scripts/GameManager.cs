@@ -30,13 +30,14 @@ public class GameManager : MonoBehaviour
 
     public Task<Block> WaitForBlockSelectionAsync(HashSet<Block> validTargets)
     {
-        gameState = GameState.Waiting;
         _blockSelectionSource = new();
         SpecialSelectionList = validTargets;
         return _blockSelectionSource.Task;
     }
 
     public void ResetGameState() => gameState = GameState.Normal;
+
+    public void PauseGameState() => gameState = GameState.Waiting;
 
 
     private void Awake()
@@ -130,6 +131,9 @@ public class GameManager : MonoBehaviour
 
     public void NextPlayerTurn()
     {
+        if (gameState == GameState.Waiting)
+            return;
+
         CurrentPlayerId = (CurrentPlayerId + 1) % terrainManager.nb_players;
         PowerManager.Instance.DecrementAllNbTurns();
 

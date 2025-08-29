@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class DataManager
 {
     public const int MaxNbUseOfContagion = 1;
+    public const int MaxNbUseOfCombo = 1;
     public static DataManager Instance;
 
     public static Material normalColor;
@@ -17,6 +18,7 @@ public class DataManager
         { "PlayerHoverColors", new Material[4] },
         { "nbTurnToPass", new int[4] },
         { "nbUseOfContagion", new int[4] },
+        { "nbUseOfCombo", new int[4] },
     };
 
     public DataManager()
@@ -35,6 +37,8 @@ public class DataManager
     public static int[] GetPassTurns() => (int[])Instance.PlayerDatas["nbTurnToPass"];
 
     public static int[] GetNbContagions() => (int[])Instance.PlayerDatas["nbUseOfContagion"];
+
+    public static int[] GetNbCombos() => (int[])Instance.PlayerDatas["nbUseOfCombo"];
 
     public static int[] GetConquerPoints() => (int[])Instance.PlayerDatas["conquerPoints"];
 

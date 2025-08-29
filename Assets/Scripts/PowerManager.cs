@@ -13,6 +13,9 @@ public class PowerManager
 
     public static PowerManager Instance;
 
+    private Block TeleportedAt = null;
+    private int TotalTurnsForCombo = 0;
+
     public PowerManager(Action<Block, bool> conquer = null, Action<Block> free = null)
     {
         Instance = this;
@@ -43,7 +46,7 @@ public class PowerManager
 
                 foreach (var blockId in block.NeighborsIndexes)
                 {
-                    var neighborBlock = GameManager.terrainManager.Blocks[blockId];
+                    var neighborBlock = Blocks[blockId];
                     if (neighborBlock.OwnerId == GameManager.Instance.CurrentPlayerId)
                         neighborBlock.Powers.Add("Gel");
                 }
@@ -55,10 +58,11 @@ public class PowerManager
                 break;
             case "Contagion":
                 DataManager.GetNbContagions()[GameManager.Instance.CurrentPlayerId]++;
+                GameManager.Instance.PauseGameState();
 
                 UIManager.Instance.AskMessageToPlayer("Sélectionnez un bloc ennemi adjacent à ce bloc pour le contaminer.");
                 var targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(new HashSet<Block>(block.NeighborsIndexes.Where(BlockId => Blocks[BlockId].IsOpponent() && Blocks[BlockId].IsCurrentlyPlayable())
-                .Select(id => GameManager.terrainManager.Blocks[id])));
+                .Select(id => Blocks[id])));
 
                 // Contagion
                 DisableAllPowers(targetBlock);
@@ -73,11 +77,15 @@ public class PowerManager
 
                 targetBlock.SetLevel(1);
                 await EnablePower(targetBlock, level1PowerName);
+
                 GameManager.Instance.ResetGameState();
                 break;
             case "Téléportation":
+                GameManager.Instance.PauseGameState();
+
                 UIManager.Instance.AskMessageToPlayer("Sélectionnez un bloc vide où se téléporter.");
-                targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(new HashSet<Block>(GameManager.terrainManager.Blocks.Where(block => block.IsEmpty() && block.IsCurrentlyPlayable())));
+                targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(new HashSet<Block>(Blocks.Where(block => block.IsEmpty() && block.IsCurrentlyPlayable())));
+                TeleportedAt = targetBlock;
                 UIManager.Instance.ClearMessage();
 
                 // Téléportation
@@ -85,10 +93,11 @@ public class PowerManager
                 targetBlock.SetConquerRange(1);
                 Conquer?.Invoke(targetBlock, false);
                 Free?.Invoke(block);
+
                 GameManager.Instance.ResetGameState();
                 break;
             case "Bouclier":
-                nbTours = 3;
+                nbTours = TotalTurnsForCombo = 3;
                 block.PowerDisplay = "BouclierDeZone";
                 
                 block.SetMoveRange(3);
@@ -97,9 +106,46 @@ public class PowerManager
 
                 foreach (var blockId in ExtendedNeighbors)
                 {
-                    GameManager.terrainManager.Blocks[blockId].Powers.Add("Bouclier");
-                    GameManager.terrainManager.Blocks[blockId].Powers.Add("Bouclier" + block.OwnerId);
+                    Blocks[blockId].Powers.Add("Bouclier");
+                    Blocks[blockId].Powers.Add("Bouclier" + block.OwnerId);
                 }
+                await Task.Yield();
+                break;
+            case "Explosion":
+                foreach (var blockId in block.NeighborsIndexes)
+                {
+                    var neighborBlock = Blocks[blockId];
+                    if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
+                        Free?.Invoke(neighborBlock);
+                }
+                await Task.Yield();
+                break;
+            case "Combo":
+                DataManager.GetNbCombos()[GameManager.Instance.CurrentPlayerId]++;
+                DataManager.GetPassTurns()[GameManager.Instance.CurrentPlayerId]++;
+                GameManager.Instance.PauseGameState();
+                TeleportedAt = null;
+                TotalTurnsForCombo = 0;
+                
+                UIManager.Instance.AskMessageToPlayer("Sélectionnez un 1er pouvoir pour le bloc transformé.");
+                var level3PowerName = await UIManager.Instance.WaitForPowerSelectionAsync(3);
+                UIManager.Instance.ClearMessage();
+
+                await EnablePower(block, level3PowerName);
+                
+                UIManager.Instance.AskMessageToPlayer("Sélectionnez un 2e pouvoir pour le bloc transformé.");
+                level3PowerName = await UIManager.Instance.WaitForPowerSelectionAsync(3);
+                UIManager.Instance.ClearMessage();
+
+                if (TeleportedAt != null)
+                    block = TeleportedAt;
+                await EnablePower(block, level3PowerName);
+
+                block.SetLevel(4);
+                block.PowerDisplay = "Combo";
+                nbTours = TotalTurnsForCombo;
+
+                GameManager.Instance.ResetGameState();                
                 break;
         }
         UIManager.Instance.ShowPowers(false);
@@ -138,8 +184,8 @@ public class PowerManager
                 block.Powers.Remove("Gel");
                 foreach (var blockId in block.NeighborsIndexes)
                 {
-                    var neighborBlock = GameManager.terrainManager.Blocks[blockId];
-                    if (neighborBlock.OwnerId == GameManager.Instance.CurrentPlayerId)
+                    var neighborBlock = Blocks[blockId];
+                    if (neighborBlock.OwnerId == block.OwnerId)
                         neighborBlock.Powers.Remove("Gel");
                 }
                 break;
@@ -150,8 +196,8 @@ public class PowerManager
 
                 foreach (var blockId in ExtendedNeighbors)
                 {
-                    GameManager.terrainManager.Blocks[blockId].Powers.Remove("Bouclier");
-                    GameManager.terrainManager.Blocks[blockId].Powers.Remove("Bouclier" + block.OwnerId);
+                    Blocks[blockId].Powers.Remove("Bouclier");
+                    Blocks[blockId].Powers.Remove("Bouclier" + block.OwnerId);
                 }
                 break;
         }
@@ -178,7 +224,7 @@ public class PowerManager
             if (Datas[couple.id].Count == 0)
                 Datas.Remove(couple.id);
 
-            var block = GameManager.terrainManager.Blocks[couple.id];
+            var block = Blocks[couple.id];
             DisablePower(block, couple.nom);
             block.SetLevel(0);
         }

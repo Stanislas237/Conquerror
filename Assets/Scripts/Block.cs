@@ -13,10 +13,12 @@ public class Block : MonoBehaviour
     
     private MeshRenderer mr;
     
+    [HideInInspector]
     public GameObject Content;
 
     public List<string> Powers = new();
     
+    [HideInInspector]
     public string PowerDisplay = string.Empty;
 
 

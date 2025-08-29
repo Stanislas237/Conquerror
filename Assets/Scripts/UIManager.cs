@@ -69,6 +69,7 @@ public class UIManager : MonoBehaviour
         foreach (Transform t in PowersParent)
             t.GetComponent<Button>().onClick.AddListener(async () =>
             {
+                Debug.Log("Special : " + specialSelectionLevel);
                 if (specialSelectionLevel != 0)
                 {
                     _powerSelectionSource.SetResult(t.name[1..]);
@@ -146,10 +147,12 @@ public class UIManager : MonoBehaviour
         textMesh.text = text;
     }
 
+    private int GetRequiredPoints(int Level) => Level = (Level >= 5) ? 50 : (Level - 1) * 10;
+
     public void ShowPowers(bool hasAtLeastOneNotCircled)
     {
         int selectLevelCount = GameManager.Instance.SelectionLevel, conquerPoints = DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId],
-        nbBlocks = GameManager.Instance.SelectedBlocks.Count, requiredPoints = selectLevelCount >= 5 ? 50 : (selectLevelCount - 1) * 10;
+        nbBlocks = GameManager.Instance.SelectedBlocks.Count, requiredPoints = GetRequiredPoints(selectLevelCount);
 
         if (specialSelectionLevel != 0)
         {
@@ -165,8 +168,11 @@ public class UIManager : MonoBehaviour
                 shouldShow &= DataManager.GetNbContagions()[GameManager.Instance.CurrentPlayerId] < DataManager.MaxNbUseOfContagion &&
                 Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => Blocks[blockId].IsOpponent() && Blocks[blockId].IsCurrentlyPlayable());
 
-            if (t.name == "3Téléportation")
+            if (t.name == "3Téléportation" && shouldShow)
                 shouldShow &= Blocks.Any(block => block.IsEmpty() && block.IsCurrentlyPlayable());
+
+            if (t.name == "4Combo" && shouldShow)
+                shouldShow &= DataManager.GetNbCombos()[GameManager.Instance.CurrentPlayerId] < DataManager.MaxNbUseOfCombo;
 
             t.gameObject.SetActive(shouldShow);
         }
