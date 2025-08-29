@@ -20,17 +20,23 @@ public class GameManager : MonoBehaviour
 
 
     // Sélection spéciale
+    private enum GameState { Normal, Waiting, }
+
+    private GameState gameState = GameState.Normal;
+
     private HashSet<Block> SpecialSelectionList = null;
 
     private TaskCompletionSource<Block> _blockSelectionSource;
 
     public Task<Block> WaitForBlockSelectionAsync(HashSet<Block> validTargets)
     {
+        gameState = GameState.Waiting;
         _blockSelectionSource = new();
         SpecialSelectionList = validTargets;
         return _blockSelectionSource.Task;
     }
 
+    public void ResetGameState() => gameState = GameState.Normal;
 
 
     private void Awake()
@@ -44,14 +50,10 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
 
         new DataManager();
-        new PowerManager(Conquer);
+        new PowerManager(Conquer, Free);
     }
 
-    private void Start()
-    {
-        terrainManager.GenerateBlocks();
-        // UIManager.Instance.Fusion = Fusion;
-    }
+    private void Start() => terrainManager.GenerateBlocks();
     
     public void OnBlockEnter(Block block)
     {
@@ -61,6 +63,9 @@ public class GameManager : MonoBehaviour
                 block.SetColor(DataManager.specialSelectionColor);
             return;
         }
+
+        if (gameState == GameState.Waiting)
+            return;
 
         if (!SelectedBlocks.Contains(block.myOwnIndex))
             if (block.OwnerId == CurrentPlayerId)
@@ -81,6 +86,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (gameState == GameState.Waiting)
+            return;
+
         if (block.OwnerId == CurrentPlayerId)
             Select(block);
         else if (block.OwnerId == -1 && DataManager.GetPositions().Any(i => Blocks[i].HasNeighbor(Blocks, block.myOwnIndex, Blocks[i].MoveRange)))
@@ -89,6 +97,12 @@ public class GameManager : MonoBehaviour
 
     public void OnBlockExit(Block block)
     {
+        if (SpecialSelectionList != null)
+            block.SetColor(DataManager.normalColor);
+
+        if (gameState == GameState.Waiting)
+            return;
+
         if (!SelectedBlocks.Contains(block.myOwnIndex) && ((block.OwnerId == CurrentPlayerId) || (block.OwnerId == -1 && DataManager.GetPositions().Any(i => Blocks[i].HasNeighbor(Blocks, block.myOwnIndex, Blocks[i].MoveRange)))))
             block.SetColor(DataManager.normalColor);
     }
@@ -108,7 +122,7 @@ public class GameManager : MonoBehaviour
             UIManager.Instance.ShowPlayerUI();
     }
 
-    private void Free(Block block)
+    public void Free(Block block)
     {
         DataManager.GetPositions(block.OwnerId).Remove(block.myOwnIndex);
         block.SetOwnerId(-1);
@@ -138,6 +152,7 @@ public class GameManager : MonoBehaviour
             if (block.OwnerId >= 0)
                 DataManager.GetPositions(block.OwnerId).Remove(block.myOwnIndex);
 
+            PowerManager.Instance.DisableAllPowers(block);
             DataManager.GetPositions().Add(block.myOwnIndex);
             block.SetOwnerId(CurrentPlayerId);
         }
@@ -183,7 +198,7 @@ public class GameManager : MonoBehaviour
         terrainManager.Draw();
     }
 
-    private async Task Fusion(string powerName)
+    public async Task Fusion(string powerName)
     {
         var LevelTartget = SelectionLevel - 1;
         var tempList = SelectedBlocks.ToList();
@@ -192,9 +207,10 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < tempList.Count - 1; i++)
             Free(Blocks[tempList[i]]);
         var block = Blocks[tempList.Last()];
+        PowerManager.Instance.DisableAllPowers(block);
         block.SetLevel(LevelTartget);
-
         await PowerManager.Instance.EnablePower(block, powerName);
+        DataManager.GetConquerPoints()[CurrentPlayerId] += 2;
         NextPlayerTurn();
     }
 }

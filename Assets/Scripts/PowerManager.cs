@@ -7,14 +7,16 @@ public class PowerManager
 {
     private Dictionary<int, Dictionary<string, int>> Datas;
     public Action<Block, bool> Conquer;
+    public Action<Block> Free;
 
     public static PowerManager Instance;
 
-    public PowerManager(Action<Block, bool> conquer = null)
+    public PowerManager(Action<Block, bool> conquer = null, Action<Block> free = null)
     {
         Instance = this;
         Datas = new();
         Conquer = conquer;
+        Free = free;
     }
 
     public async Task EnablePower(Block block, string powerName)
@@ -56,15 +58,30 @@ public class PowerManager
 
                 // Contagion
                 DisableAllPowers(targetBlock);
+                targetBlock.SetConquerRange(0);
                 Conquer?.Invoke(targetBlock, false);
+                targetBlock.SetConquerRange(1);
 
-                UIManager.Instance.AskMessageToPlayer("Sélectionnez un povoir pour le bloc contaminé.");
+                UIManager.Instance.AskMessageToPlayer("Sélectionnez un pouvoir pour le bloc contaminé.");
+                var level1PowerName = await UIManager.Instance.WaitForPowerSelectionAsync(1);
 
-                block.SetConquerRange(2);
-                Conquer?.Invoke(block, false);
-                block.SetConquerRange(1);
+                targetBlock.SetLevel(1);
+                await EnablePower(targetBlock, level1PowerName);
+                GameManager.Instance.ResetGameState();
+                break;
+            case "Téléportation":
+                UIManager.Instance.AskMessageToPlayer("Sélectionnez un bloc vide où se téléporter.");
+                targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(new HashSet<Block>(GameManager.terrainManager.Blocks.Where(block => block.OwnerId == -1)));
+
+                // Téléportation
+                DisableAllPowers(targetBlock);
+                targetBlock.SetConquerRange(1);
+                Conquer?.Invoke(targetBlock, false);
+                Free?.Invoke(block);
+                GameManager.Instance.ResetGameState();
                 break;
         }
+        UIManager.Instance.ShowPowers(false);
 
         if (!Datas.ContainsKey(block.myOwnIndex))
             Datas[block.myOwnIndex] = new();
@@ -92,7 +109,7 @@ public class PowerManager
         switch (powerName)
         {
             case "Résistance":
-                block.SetActive(true);
+                block.Powers.Remove("Résistance");
                 break;
             case "Déplacement":
                 block.SetMoveRange(1);

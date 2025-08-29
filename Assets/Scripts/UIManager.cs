@@ -3,15 +3,15 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
     private Camera mainCamera;
     private List<Block> blocksToShowLevels = new();
-    public Action<string> Fusion;
-    public bool JustAssignPower = false;
 
     [SerializeField]
     private Transform LevelTextPrefab;
@@ -19,6 +19,20 @@ public class UIManager : MonoBehaviour
     private Transform PowersParent;
     [SerializeField]
     private Transform PlayerUIsParent;
+
+    // Sélection d'un pouvoir pour la contagion
+    private int specialSelectionLevel = 0;
+    private TaskCompletionSource<string> _powerSelectionSource;
+
+    public Task<string> WaitForPowerSelectionAsync(int powerLevel)
+    {
+        specialSelectionLevel = powerLevel;
+        _powerSelectionSource = new();
+        ShowPowers(true);
+        return _powerSelectionSource.Task;
+    }
+
+
 
     private void Awake()
     {
@@ -47,10 +61,15 @@ public class UIManager : MonoBehaviour
         ShowPlayerUI();
 
         foreach (Transform t in PowersParent)
-            t.GetComponent<Button>().onClick.AddListener(() =>
+            t.GetComponent<Button>().onClick.AddListener(async () =>
             {
-                if (JustAssignPower)
-                Fusion?.Invoke(t.name[1..]);
+                if (specialSelectionLevel != 0)
+                {
+                    _powerSelectionSource.SetResult(t.name[1..]);
+                    specialSelectionLevel = 0;
+                }
+                else
+                    await GameManager.Instance.Fusion(t.name[1..]);
             });
     }
 
@@ -58,7 +77,7 @@ public class UIManager : MonoBehaviour
     {
         var ConquerPointsBar = PlayerUIsParent.GetChild(index).GetChild(1).GetChild(1);
         var currScale = ConquerPointsBar.localScale;
-        currScale.y = DataManager.GetConquerPoints()[index] / 50f;
+        currScale.y = Mathf.Clamp(DataManager.GetConquerPoints()[index] / 50f, 0, 1);
         ConquerPointsBar.localScale = currScale;
     }
 
@@ -103,10 +122,17 @@ public class UIManager : MonoBehaviour
         prefab.SetLocalPositionAndRotation(ScreenToCanvasPosition(mainCamera.WorldToScreenPoint(block.Content.transform.position + Vector3.up * 4f)), Quaternion.identity);
         prefab.name = $"LevelPrefabForId {block.myOwnIndex}";
         prefab.GetComponent<TextMeshProUGUI>().text = block.Level + block.PowerDisplay;
+        StartCoroutine(ResetBlockDisplayText(prefab.GetComponent<TextMeshProUGUI>(), block.Level.ToString()));
         prefab.gameObject.SetActive(block.Level > 0);
 
         if (!blocksToShowLevels.Contains(block))
             blocksToShowLevels.Add(block);
+    }
+
+    private IEnumerator ResetBlockDisplayText(TextMeshProUGUI textMesh, string text)
+    {
+        yield return new WaitForSeconds(0.5f);
+        textMesh.text = text;
     }
 
     public void ShowPowers(bool hasAtLeastOneNotCircled)
@@ -114,12 +140,19 @@ public class UIManager : MonoBehaviour
         int selectLevelCount = GameManager.Instance.SelectionLevel, conquerPoints = DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId],
         nbBlocks = GameManager.Instance.SelectedBlocks.Count, requiredPoints = selectLevelCount >= 5 ? 50 : (selectLevelCount - 1) * 10;
 
+        if (specialSelectionLevel != 0)
+        {
+            selectLevelCount = specialSelectionLevel + 1;
+            requiredPoints = 0;
+            nbBlocks = 2;
+        }
+
         foreach (Transform t in PowersParent)
         {
             var shouldShow = hasAtLeastOneNotCircled && nbBlocks > 1 && conquerPoints >= requiredPoints && t.name[..1] == (selectLevelCount - 1).ToString();
-            if (t.name == "2Contagion")
-                shouldShow &= DataManager.GetNbContagions()[GameManager.Instance.CurrentPlayerId] < DataManager.MaxNbUseOfContagion
-                && GameManager.terrainManager.Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => !new int[2] { -1, GameManager.Instance.CurrentPlayerId }.Contains(GameManager.terrainManager.Blocks[blockId].OwnerId));
+            if (t.name == "2Contagion" && shouldShow)
+                shouldShow &= DataManager.GetNbContagions()[GameManager.Instance.CurrentPlayerId] < DataManager.MaxNbUseOfContagion &&
+                GameManager.terrainManager.Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => !new int[2] { -1, GameManager.Instance.CurrentPlayerId }.Contains(GameManager.terrainManager.Blocks[blockId].OwnerId));
 
             t.gameObject.SetActive(shouldShow);
         }

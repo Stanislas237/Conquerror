@@ -10,7 +10,7 @@ public class Block : MonoBehaviour
     private MeshRenderer mr;
     public GameObject Content;
 
-    public HashSet<string> Powers = new();
+    public List<string> Powers = new();
     public string PowerDisplay = string.Empty;
 
 
