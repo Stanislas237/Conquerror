@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -134,7 +135,7 @@ public class GameManager : MonoBehaviour
         if (gameState == GameState.Waiting)
             return;
 
-        CurrentPlayerId = (CurrentPlayerId + 1) % terrainManager.nb_players;
+        CurrentPlayerId = (CurrentPlayerId + 1) % TerrainManager.nb_players;
         PowerManager.Instance.DecrementAllNbTurns();
 
         if (DataManager.GetNbPositionsOccuped() >= Blocks.Count)
@@ -246,10 +247,11 @@ public class GameManager : MonoBehaviour
         NextPlayerTurn();
     }
 
+    public void OpenScene(string name) => SceneManager.LoadScene(name);
+
     public void EndGame(int winnerId)
     {
         PauseGameState();
-        CurrentPlayerId = winnerId;
-        UIManager.Instance.AskMessageToPlayer($"Player {winnerId + 1} a gagné !");
+        UIManager.Instance.ShowEndPanel(CurrentPlayerId = winnerId);
     }
 }

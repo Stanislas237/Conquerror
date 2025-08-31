@@ -6,15 +6,15 @@ public class TerrainManager : MonoBehaviour
 {
     public readonly List<Block> Blocks = new();
 
-    public int nb_players = 2;
+    public static int nb_players = 2;
 
-    public bool alt_mode = false;
+    public static bool alt_mode = false;
 
-    public bool simulateNeighbors = true;
+    public static bool simulateNeighbors = true;
 
-    public Vector2Int terrainSize = new();
+    public static Vector2Int terrainSize = new();
 
-    public int terrainRay = 5;
+    public static int terrainRay = 5;
 
     public void GenerateBlocks()
     {

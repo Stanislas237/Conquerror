@@ -25,6 +25,8 @@ public class UIManager : MonoBehaviour
     private Image NextButtonImage;
     [SerializeField]
     private TextMeshProUGUI TextMeshMessage;
+    [SerializeField]
+    private Transform EndPanel;
 
     // Sélection d'un pouvoir pour la contagion
     private int specialSelectionLevel = 0;
@@ -52,7 +54,7 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        for (int i = 0; i < GameManager.terrainManager.nb_players; i++)
+        for (int i = 0; i < TerrainManager.nb_players; i++)
         {
             var ui = PlayerUIsParent.GetChild(i);
             var color = DataManager.GetColors()[i].color;
@@ -103,7 +105,7 @@ public class UIManager : MonoBehaviour
         var CurrPlayer = GameManager.Instance.CurrentPlayerId;
         NextButtonImage.color = DataManager.GetColors()[CurrPlayer].color;
 
-        for (int i = 0; i < GameManager.terrainManager.nb_players; i++)
+        for (int i = 0; i < TerrainManager.nb_players; i++)
         {
             var ui = PlayerUIsParent.GetChild(i).gameObject;
             if (ui.activeSelf)
@@ -127,7 +129,7 @@ public class UIManager : MonoBehaviour
         // Afficher le message à l'utilisateur
         Debug.Log($"Message to Player: {message}");
         TextMeshMessage.text = message;
-        TextMeshMessage.color = DataManager.GetHoverColors()[GameManager.Instance.CurrentPlayerId].color;
+        TextMeshMessage.color = DataManager.GetColors()[GameManager.Instance.CurrentPlayerId].color;
     }
 
     public void ClearMessage() => TextMeshMessage.text = string.Empty;
@@ -180,6 +182,18 @@ public class UIManager : MonoBehaviour
 
             t.gameObject.SetActive(shouldShow);
         }
+    }
+
+    public void ShowEndPanel(int winnerId)
+    {
+        EndPanel.gameObject.SetActive(true);
+        var color = DataManager.GetColors()[winnerId].color;
+        foreach (var img in EndPanel.GetChild(0).GetComponentsInChildren<Image>())
+            if (img.name != "Panel_FG")
+                img.color = color;
+        var txt = EndPanel.GetComponentInChildren<TextMeshProUGUI>();
+        txt.color = color;
+        txt.text = $"Player {winnerId + 1} a gagné !";
     }
 
     public void RefreshLevels()

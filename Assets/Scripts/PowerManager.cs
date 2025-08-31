@@ -186,7 +186,7 @@ public class PowerManager
 
         if (!Datas.ContainsKey(block.myOwnIndex))
             Datas[block.myOwnIndex] = new();
-        Datas[block.myOwnIndex][powerName] = nbTours * GameManager.terrainManager.nb_players;
+        Datas[block.myOwnIndex][powerName] = nbTours * TerrainManager.nb_players;
 
     }
 
