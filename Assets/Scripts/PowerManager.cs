@@ -27,6 +27,7 @@ public class PowerManager
     public async Task EnablePower(Block block, string powerName, int Level)
     {
         int nbTours = 0;
+        block.SetLevel(Level);
         switch (powerName)
         {
             case "Defense":
@@ -69,6 +70,26 @@ public class PowerManager
                 await Task.Yield();
                 break;
 
+            case "Artefact":
+                foreach (var neighborBlock in block.GetExtendedNeighbors(Level + 1))
+                    if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
+                        Free?.Invoke(neighborBlock);
+
+                await Task.Yield();
+                break;
+
+            case "Domination":
+                foreach (var neighborBlock in block.GetExtendedNeighbors(Level))
+                    if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
+                    {
+                        neighborBlock.SetConquerRange(0);
+                        Conquer?.Invoke(neighborBlock, false);
+                        neighborBlock.SetConquerRange(1);
+                    }
+
+                await Task.Yield();
+                break;
+
             case "Contagion":
                 UIManager.Instance.AskMessageToPlayer($"Sélectionnez un bloc ennemi dans un rayon de {Level} pour le contaminer.");
 
@@ -100,80 +121,47 @@ public class PowerManager
                 Conquer?.Invoke(targetBlock, false);
                 Free?.Invoke(block);
                 break;
-                
-            case "Bouclier":
-                nbTours = TotalTurnsForCombo = 3;
-                block.PowerDisplay = "BouclierDeZone";
-                
-                block.SetMoveRange(3);
-                var ExtendedNeighbors = block.GetExtendedNeighbors();
-                block.SetMoveRange(1);
 
-                foreach (var blockId in ExtendedNeighbors)
+            case "Bouclier":
+                TotalTurnsForCombo += nbTours = 3;
+                block.PowerDisplay = "BouclierDeZone";
+
+                foreach (var neighborBlock in block.GetExtendedNeighbors(3))
                 {
-                    Blocks[blockId].Powers.Add("Bouclier");
-                    Blocks[blockId].Powers.Add("Bouclier" + block.OwnerId);
+                    neighborBlock.Powers.Add("Bouclier");
+                    neighborBlock.Powers.Add("Bouclier" + block.OwnerId);
                 }
+
                 await Task.Yield();
                 break;
-            case "Explosion":
-                foreach (var blockId in block.NeighborsIndexes)
-                {
-                    var neighborBlock = Blocks[blockId];
-                    if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
-                        Free?.Invoke(neighborBlock);
-                }
-                await Task.Yield();
-                break;
+
             case "Combo":
-                DataManager.GetNbCombos()[GameManager.Instance.CurrentPlayerId]++;
-                DataManager.GetPassTurns()[GameManager.Instance.CurrentPlayerId]++;
-                GameManager.Instance.PauseGameState();
                 TeleportedAt = null;
                 TotalTurnsForCombo = 0;
-                
-                UIManager.Instance.AskMessageToPlayer("Sélectionnez un 1er pouvoir pour le bloc transformé.");
-                var level3PowerName1 = await UIManager.Instance.WaitForPowerSelectionAsync(3);
-                UIManager.Instance.ClearMessage();
 
-                await EnablePower(block, level3PowerName1);
-                
-                UIManager.Instance.AskMessageToPlayer("Sélectionnez un 2e pouvoir pour le bloc transformé.");
-                var level3PowerName2 = await UIManager.Instance.WaitForPowerSelectionAsync(3);
-                UIManager.Instance.ClearMessage();
+                LevelTarget = Math.Max(1, Level - 1);
+                UIManager.Instance.AskMessageToPlayer($"Sélectionnez un pouvoir de niveau {LevelTarget} pour ce bloc.");
 
-                if (TeleportedAt != null)
-                    block = TeleportedAt;
-                
-                await EnablePower(block, level3PowerName2);
+                var levelDownPowerName1 = await UIManager.Instance.WaitForPowerSelectionAsync(LevelTarget);
+                await EnablePower(block, levelDownPowerName1, LevelTarget);
+
+                UIManager.Instance.AskMessageToPlayer("Sélectionnez encore un pouvoir pour le bloc transformé.");
+                var levelDownPowerName2 = await UIManager.Instance.WaitForPowerSelectionAsync(LevelTarget);
 
                 if (TeleportedAt != null)
                     block = TeleportedAt;
+                await EnablePower(block, levelDownPowerName2, LevelTarget);
 
-                if (level3PowerName1 == "Bouclier" && level3PowerName2 == "Téléportation")
-                    await EnablePower(block, level3PowerName1);
+                if (TeleportedAt != null)
+                    block = TeleportedAt;
 
-                block.SetLevel(4);
-                block.PowerDisplay = "Combo";
+                if (levelDownPowerName1 == "Bouclier" && levelDownPowerName2 == "Téléportation")
+                    await EnablePower(block, levelDownPowerName1, LevelTarget);
+
+                block.PowerDisplay = "Combinaison";
                 nbTours = TotalTurnsForCombo;
 
-                GameManager.Instance.ResetGameState();                
-                break;
-            case "Domination":
-                block.SetMoveRange(3);
-                ExtendedNeighbors = block.GetExtendedNeighbors();
-                block.SetMoveRange(1);
-
-                foreach (var blockId in ExtendedNeighbors)
-                {
-                    var neighborBlock = Blocks[blockId];
-                    if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
-                    {
-                        neighborBlock.SetConquerRange(0);
-                        Conquer?.Invoke(neighborBlock, false);
-                        neighborBlock.SetConquerRange(1);
-                    }
-                }
+                await Task.Yield();
                 break;
         }
 
@@ -189,13 +177,12 @@ public class PowerManager
 
     public void DisableAllPowers(Block block)
     {
-        // block.SetLevel(0);
         block.ClearPowers();
         
         if (!Datas.ContainsKey(block.MyOwnIndex))
             return;
 
-        foreach (var powerName in new List<string>(Datas[block.MyOwnIndex].Keys))
+        foreach (var powerName in new HashSet<string>(Datas[block.MyOwnIndex].Keys))
             DisablePower(block, powerName);
         Datas.Remove(block.MyOwnIndex);
     }
@@ -205,30 +192,17 @@ public class PowerManager
         block.PowerDisplay = string.Empty;
         switch (powerName)
         {
-            case "Résistance":
-                block.Powers.Remove("Résistance");
-                break;
-            case "Déplacement":
-                block.SetMoveRange(1);
-                break;
-            case "Gel":
-                block.Powers.Remove("Gel");
-                foreach (var blockId in block.NeighborsIndexes)
-                {
-                    var neighborBlock = Blocks[blockId];
+            case "Defense":
+                foreach (var neighborBlock in block.GetExtendedNeighbors(block.Level - 1))
                     if (neighborBlock.OwnerId == block.OwnerId)
                         neighborBlock.Powers.Remove("Gel");
-                }
                 break;
-            case "Bouclier":
-                block.SetMoveRange(3);
-                var ExtendedNeighbors = block.GetExtendedNeighbors();
-                block.SetMoveRange(1);
 
-                foreach (var blockId in ExtendedNeighbors)
+            case "Bouclier":
+                foreach (var neighborBlock in block.GetExtendedNeighbors(3))
                 {
-                    Blocks[blockId].Powers.Remove("Bouclier");
-                    Blocks[blockId].Powers.Remove("Bouclier" + block.OwnerId);
+                    neighborBlock.Powers.Remove("Bouclier");
+                    neighborBlock.Powers.Remove("Bouclier" + block.OwnerId);
                 }
                 break;
         }

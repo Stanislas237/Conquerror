@@ -15,7 +15,7 @@ public class DataManager
 
     public DataManager()
     {
-        PlayerDatas["PawnTypes"] ??= new PawnType[4] { PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant };
+        PlayerDatas.TryAdd("PawnTypes", new PawnType[4] { PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant });
         PlayerDatas["playersPositions"] = new HashSet<int>[4] { new(), new(), new(), new() };
         PlayerDatas["conquerPoints"] = new int[4];
         PlayerDatas["Energy"] = new int[4];

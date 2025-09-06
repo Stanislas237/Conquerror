@@ -140,7 +140,7 @@ public class GameManager : MonoBehaviour
 
         if (DataManager.GetNbPositionsOccuped() >= Blocks.Count)
         {
-            GameManager.Instance.EndGame(DataManager.GetTheLongerPostitionsList());
+            EndGame(DataManager.GetTheLongerPostitionsList());
             return;
         }
 
@@ -151,7 +151,10 @@ public class GameManager : MonoBehaviour
             NextPlayerTurn();
         }
         else
+        {
+            UnSelect();
             UIManager.Instance.ShowPlayerUI();
+        }
     }
 
     public void Free(Block block)

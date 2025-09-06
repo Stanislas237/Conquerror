@@ -118,6 +118,9 @@ public class Block : MonoBehaviour
     // Getters
     public HashSet<int> GetExtendedNeighbors()
     {
+        if (MoveRange == 0)
+            return new HashSet<int>(){ MyOwnIndex };
+
         var extendedNeighbors = new HashSet<int>(NeighborsIndexes);
         var currentNeighbors = new HashSet<int>(NeighborsIndexes);
         var moveRange = MoveRange;

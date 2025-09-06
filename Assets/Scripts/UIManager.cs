@@ -168,37 +168,43 @@ public class UIManager : MonoBehaviour
     public void ShowPowers(bool hasAtLeastOneNotCircled)
     {
         int selectLevelCount = GameManager.Instance.SelectionLevel, currPlayer = GameManager.Instance.CurrentPlayerId, energy = DataManager.GetEnergy()[currPlayer],
-        nbBlocks = GameManager.Instance.SelectedBlocks.Count, requiredPoints = GetRequiredEnergy(selectLevelCount);
+        nbBlocks = GameManager.Instance.SelectedBlocks.Count, requiredEnergy = GetRequiredEnergy(selectLevelCount);
 
         if (specialSelectionLevel != 0)
         {
             selectLevelCount = specialSelectionLevel + 1;
-            requiredPoints = 0;
+            requiredEnergy = 0;
             nbBlocks = 2;
         }
 
         foreach (Transform t in PowersParent)
         {
-            var shouldShow = hasAtLeastOneNotCircled && nbBlocks > 1 && energy >= requiredPoints;
+            bool shouldShow = true,
+            typePower = nbBlocks == 1 && DataManager.GetConquerPoints()[currPlayer] >= DataManager.requiredConquerPointsForSpecial,
+            normalPower = hasAtLeastOneNotCircled && nbBlocks > 1 && energy >= requiredEnergy;
 
-            if (!shouldShow && nbBlocks == 1 /*&& DataManager.GetConquerPoints()[currPlayer] > DataManager.requiredConquerPointsForSpecial*/)
-            {
-                if (t.name == "Contagion")
-                    shouldShow = //DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant &&
-                    Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => Blocks[blockId].IsOpponent() && Blocks[blockId].IsCurrentlyPlayable());
+            if (t.name == "Domination")
+                shouldShow = typePower //&& DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant
+                ;
 
-                if (t.name == "Téléportation")
-                    shouldShow = //DataManager.GetPawnTypes()[currPlayer] == PawnType.Voyageur &&
-                    Blocks.Any(block => block.IsEmpty() && block.IsCurrentlyPlayable());
+            else if (t.name == "Contagion")
+                shouldShow = typePower && //DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant &&
+                Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => Blocks[blockId].IsOpponent() && Blocks[blockId].IsCurrentlyPlayable());
 
-                if (t.name == "Bouclier")
-                    shouldShow = //DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien &&
-                    true;
+            else if (t.name == "Téléportation")
+                shouldShow = typePower && //DataManager.GetPawnTypes()[currPlayer] == PawnType.Voyageur &&
+                Blocks.Any(block => block.IsEmpty() && block.IsCurrentlyPlayable());
 
-                if (t.name == "Combo")
-                    shouldShow = //DataManager.GetPawnTypes()[currPlayer] == PawnType.Archiviste &&
-                    true;
-            }
+            else if (t.name == "Bouclier")
+                shouldShow = typePower //&& DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien
+                ;
+
+            else if (t.name == "Combo")
+                shouldShow = typePower //&& DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien
+                ;
+
+            else
+                shouldShow = normalPower;
 
             t.gameObject.SetActive(shouldShow);
         }
