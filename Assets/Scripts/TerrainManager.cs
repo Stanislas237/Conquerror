@@ -44,11 +44,11 @@ public class TerrainManager : MonoBehaviour
             foreach (var index in DataManager.GetPositions(i))
             {
                 var block = Blocks[index];
-                bool neighborSelected = GameManager.Instance.SelectedBlocks.Contains(block.myOwnIndex);
+                bool neighborSelected = GameManager.Instance.SelectedBlocks.Contains(block.MyOwnIndex);
 
                 SetColor(block, DataManager.GetColors()[i], PaintMode.onlyPawn);
                 SetColor(block, neighborSelected ? DataManager.GetHoverColors()[i] : DataManager.normalColor, PaintMode.onlyBlock);
-                indexesAlreadyModified.Add(block.myOwnIndex);
+                indexesAlreadyModified.Add(block.MyOwnIndex);
 
                 if (simulateNeighbors)
                     foreach (var neighborIndex in block.GetExtendedNeighbors())
@@ -94,7 +94,7 @@ public class TerrainManager : MonoBehaviour
                     GameManager.Instance.CurrentPlayerId = (GameManager.Instance.CurrentPlayerId + 1) % nb_players;
                 }
 
-                block.myOwnIndex = Blocks.Count;
+                block.MyOwnIndex = Blocks.Count;
                 Blocks.Add(block);
 
                 var NeighborsIndexes = new Vector2Int[4] { new(i - 10, j), new(i + 10, j), new(i, j + 10), new(i, j - 10) };
@@ -153,7 +153,7 @@ public class TerrainManager : MonoBehaviour
                         GameManager.Instance.CurrentPlayerId = (GameManager.Instance.CurrentPlayerId + player_Id_increment_to_set_alt_mode_start_positions) % nb_players;
                 }
 
-                block.myOwnIndex = Blocks.Count;
+                block.MyOwnIndex = Blocks.Count;
                 Blocks.Add(block);
 
                 var NeighborsIndexes = new Vector2Int[3] { new(i - 10, j + 5), new(i, j - 10), new(i + 10, j + 5) };
@@ -211,7 +211,7 @@ public class TerrainManager : MonoBehaviour
                     GameManager.Instance.CurrentPlayerId = (GameManager.Instance.CurrentPlayerId + 1) % nb_players;
                 }
 
-                block.myOwnIndex = Blocks.Count;
+                block.MyOwnIndex = Blocks.Count;
                 Blocks.Add(block);
 
                 var NeighborsIndexes = new Vector2Int[4] { new(i - 10, j), new(i + 10, j), new(i, j + 10), new(i, j - 10) };

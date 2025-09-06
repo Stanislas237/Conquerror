@@ -3,40 +3,43 @@ using System.Collections.Generic;
 
 public class DataManager
 {
-    public const int MaxNbUseOfContagion = 1;
-    public const int MaxNbUseOfCombo = 1;
+    // public const int MaxNbUseOfContagion = 1;
+    // public const int MaxNbUseOfCombo = 1;
+    public const int requiredConquerPointsForSpecial = 30;
     public static DataManager Instance;
 
     public static Material normalColor;
     public static Material specialSelectionColor;
 
-    private readonly Dictionary<string, object> PlayerDatas = new()
-    {
-        { "playersPositions", new HashSet<int>[4] { new(), new(), new(), new() }},
-        { "conquerPoints", new int[4] },
-        { "PlayerColors", new Material[4] },
-        { "PlayerHoverColors", new Material[4] },
-        { "nbTurnToPass", new int[4] },
-        { "nbUseOfContagion", new int[4] },
-        { "nbUseOfCombo", new int[4] },
-    };
+    private static readonly Dictionary<string, object> PlayerDatas = new();
 
     public DataManager()
     {
-        Instance = this;
+        PlayerDatas["PawnTypes"] ??= new PawnType[4] { PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant };
+        PlayerDatas["playersPositions"] = new HashSet<int>[4] { new(), new(), new(), new() };
+        PlayerDatas["conquerPoints"] = new int[4];
+        PlayerDatas["Energy"] = new int[4];
+        PlayerDatas["nbTurnToPass"] = new int[4];
+        PlayerDatas["nbUseOfContagion"] = new int[4];
+        PlayerDatas["nbUseOfCombo"] = new int[4];
+        
+        if (Instance == null)
+        {
+            PlayerDatas["PlayerColors"] = Resources.LoadAll<Material>("Materials/Players");
+            PlayerDatas["PlayerHoverColors"] = Resources.LoadAll<Material>("Materials/PlayerHovers");
+            normalColor = Resources.Load<Material>("Materials/Block");
+            specialSelectionColor = Resources.Load<Material>("Materials/Terrain");
+        }
 
-        PlayerDatas["PlayerColors"] = Resources.LoadAll<Material>("Materials/Players");
-        PlayerDatas["PlayerHoverColors"] = Resources.LoadAll<Material>("Materials/PlayerHovers");
-        normalColor = Resources.Load<Material>("Materials/Block");
-        specialSelectionColor = Resources.Load<Material>("Materials/Terrain");
+        Instance = this;
     }
 
-    public static HashSet<int> GetPositions(int i) => ((HashSet<int>[])Instance.PlayerDatas["playersPositions"])[i];
+    public static HashSet<int> GetPositions(int i) => ((HashSet<int>[])PlayerDatas["playersPositions"])[i];
     public static HashSet<int> GetPositions() => GetPositions(GameManager.Instance.CurrentPlayerId);
 
     public static int GetNbPositionsOccuped()
     {
-        var Positions = (HashSet<int>[])Instance.PlayerDatas["playersPositions"];
+        var Positions = (HashSet<int>[])PlayerDatas["playersPositions"];
         int totalNbPositions = 0;
         foreach (var p in Positions)
             totalNbPositions += p.Count;
@@ -46,7 +49,7 @@ public class DataManager
     public static int GetTheLongerPostitionsList()
     {
         int maxIndex = -1, maxCount = -1;
-        var Positions = (HashSet<int>[])Instance.PlayerDatas["playersPositions"];
+        var Positions = (HashSet<int>[])PlayerDatas["playersPositions"];
         for (int i = 0; i < Positions.Length; i++)
             if (Positions[i].Count > maxCount)
             {
@@ -57,16 +60,32 @@ public class DataManager
         return maxIndex;
     }
 
-    public static int[] GetPassTurns() => (int[])Instance.PlayerDatas["nbTurnToPass"];
+    // Getters
 
-    public static int[] GetNbContagions() => (int[])Instance.PlayerDatas["nbUseOfContagion"];
+    public static PawnType[] GetPawnTypes() => (PawnType[])PlayerDatas["PawnTypes"];
 
-    public static int[] GetNbCombos() => (int[])Instance.PlayerDatas["nbUseOfCombo"];
+    public static int[] GetPassTurns() => (int[])PlayerDatas["nbTurnToPass"];
 
-    public static int[] GetConquerPoints() => (int[])Instance.PlayerDatas["conquerPoints"];
+    public static int[] GetNbContagions() => (int[])PlayerDatas["nbUseOfContagion"];
 
-    public static Material[] GetColors() => (Material[])Instance.PlayerDatas["PlayerColors"];
+    public static int[] GetNbCombos() => (int[])PlayerDatas["nbUseOfCombo"];
 
-    public static Material[] GetHoverColors() => (Material[])Instance.PlayerDatas["PlayerHoverColors"];
+    public static int[] GetConquerPoints() => (int[])PlayerDatas["conquerPoints"];
 
+    public static int[] GetEnergy() => (int[])PlayerDatas["Energy"];
+
+    public static Material[] GetColors() => (Material[])PlayerDatas["PlayerColors"];
+
+    public static Material[] GetHoverColors() => (Material[])PlayerDatas["PlayerHoverColors"];
+
+
+    // Setters
+
+    public static void SetPawnType(int i, PawnType pawnType)
+    {
+        PlayerDatas["PawnTypes"] ??= new PawnType[4] { PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant };
+        GetPawnTypes()[i] = pawnType;
+    }
 }
+
+public enum PawnType { Conquerant, Voyageur, Gardien, Archiviste }

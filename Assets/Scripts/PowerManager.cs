@@ -24,95 +24,89 @@ public class PowerManager
         Free = free;
     }
 
-    public async Task EnablePower(Block block, string powerName)
+    public async Task EnablePower(Block block, string powerName, int Level)
     {
         int nbTours = 0;
         switch (powerName)
         {
-            case "Résistance":
-                nbTours = 2;
-                block.PowerDisplay = "Résistance";
-                block.Powers.Add("Résistance");
-                break;
-            case "Déplacement":
-                nbTours = 1;
-                block.PowerDisplay = "DéplacementEtendu";
-                block.SetMoveRange(2);
-                break;
-            case "Gel":
-                nbTours = 2;
-                block.PowerDisplay = "Gel";
+            case "Defense":
+                nbTours = Level switch
+                {
+                    1 or 2 => 2,
+                    _ => Level
+                };
+
+                block.PowerDisplay = "Defense";
                 block.Powers.Add("Gel");
 
-                foreach (var blockId in block.NeighborsIndexes)
-                {
-                    var neighborBlock = Blocks[blockId];
+                if (Level == 1)
+                    break;
+
+                foreach (var neighborBlock in block.GetExtendedNeighbors(Level - 1))
                     if (neighborBlock.OwnerId == GameManager.Instance.CurrentPlayerId)
                         neighborBlock.Powers.Add("Gel");
-                }
-                break;
-            case "Capture":
-                block.SetMoveRange(2);
-                var ExtendedNeighbors = block.GetExtendedNeighbors();
-                block.SetMoveRange(1);
 
-                foreach (var blockId in ExtendedNeighbors)
-                {
-                    var neighborBlock = Blocks[blockId];
+                await Task.Yield();
+                break;
+
+            case "Mouvement":
+                UIManager.Instance.AskMessageToPlayer($"Déplacement étendu de rayon {Level + 1} activé.");
+
+                block.PowerDisplay = "Mouvement";
+                var targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(block.GetExtendedNeighbors(Level + 1));
+                Conquer?.Invoke(targetBlock, true);
+
+                await Task.Yield();
+                break;
+
+            case "Attaque":
+                foreach (var neighborBlock in block.GetExtendedNeighbors(Level))
                     if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
-                    {
-                        neighborBlock.SetConquerRange(0);
+                        // neighborBlock.SetConquerRange(0);
                         Conquer?.Invoke(neighborBlock, false);
-                        neighborBlock.SetConquerRange(1);
-                    }
-                }
-                break;
-            case "Contagion":
-                DataManager.GetNbContagions()[GameManager.Instance.CurrentPlayerId]++;
-                GameManager.Instance.PauseGameState();
+                        // neighborBlock.SetConquerRange(1);
 
-                UIManager.Instance.AskMessageToPlayer("Sélectionnez un bloc ennemi adjacent à ce bloc pour le contaminer.");
-                var targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(new HashSet<Block>(block.NeighborsIndexes.Where(BlockId => Blocks[BlockId].IsOpponent() && Blocks[BlockId].IsCurrentlyPlayable())
-                .Select(id => Blocks[id])));
+                await Task.Yield();
+                break;
+
+            case "Contagion":
+                UIManager.Instance.AskMessageToPlayer($"Sélectionnez un bloc ennemi dans un rayon de {Level} pour le contaminer.");
+
+                targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(block.GetExtendedNeighbors(Level).Where(b => b.IsOpponent() && b.IsCurrentlyPlayable()));
 
                 // Contagion
                 DisableAllPowers(targetBlock);
+                targetBlock.SetLevel(0);
                 targetBlock.SetConquerRange(0);
                 Conquer?.Invoke(targetBlock, false);
                 targetBlock.SetConquerRange(1);
 
-                UIManager.Instance.AskMessageToPlayer("Sélectionnez un pouvoir pour le bloc contaminé.");
-                var level1PowerName = await UIManager.Instance.WaitForPowerSelectionAsync(1);
+                var LevelTarget = Math.Max(1, Level - 1);
+                UIManager.Instance.AskMessageToPlayer($"Sélectionnez un combo de niveau {LevelTarget} pour le bloc contaminé.");
+                var levelDownPowerName = await UIManager.Instance.WaitForPowerSelectionAsync(LevelTarget);
 
-                UIManager.Instance.ClearMessage();
-
-                targetBlock.SetLevel(1);
-                await EnablePower(targetBlock, level1PowerName);
-
-                GameManager.Instance.ResetGameState();
+                // Pouvoir
+                targetBlock.SetLevel(LevelTarget);
+                await EnablePower(targetBlock, levelDownPowerName, LevelTarget);
                 break;
-            case "Téléportation":
-                GameManager.Instance.PauseGameState();
 
+            case "Téléportation":
                 UIManager.Instance.AskMessageToPlayer("Sélectionnez un bloc vide où se téléporter.");
-                targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(new HashSet<Block>(Blocks.Where(block => block.IsEmpty() && block.IsCurrentlyPlayable())));
+                targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(Blocks.Where(block => block.IsEmpty() && block.IsCurrentlyPlayable()));
                 TeleportedAt = targetBlock;
-                UIManager.Instance.ClearMessage();
 
                 // Téléportation
                 DisableAllPowers(targetBlock);
-                targetBlock.SetConquerRange(1);
                 Conquer?.Invoke(targetBlock, false);
                 Free?.Invoke(block);
-
-                GameManager.Instance.ResetGameState();
                 break;
+                
             case "Bouclier":
                 nbTours = TotalTurnsForCombo = 3;
                 block.PowerDisplay = "BouclierDeZone";
                 
                 block.SetMoveRange(3);
-                ExtendedNeighbors = block.GetExtendedNeighbors();
+                var ExtendedNeighbors = block.GetExtendedNeighbors();
                 block.SetMoveRange(1);
 
                 foreach (var blockId in ExtendedNeighbors)
@@ -182,25 +176,28 @@ public class PowerManager
                 }
                 break;
         }
-        UIManager.Instance.ShowPowers(false);
 
-        if (!Datas.ContainsKey(block.myOwnIndex))
-            Datas[block.myOwnIndex] = new();
-        Datas[block.myOwnIndex][powerName] = nbTours * TerrainManager.nb_players;
+        UIManager.Instance.ClearMessage();
+        UIManager.Instance.ShowPowers(false);
+        GameManager.Instance.ResetGameState();
+
+        if (!Datas.ContainsKey(block.MyOwnIndex))
+            Datas[block.MyOwnIndex] = new();
+        Datas[block.MyOwnIndex][powerName] = nbTours * TerrainManager.nb_players;
 
     }
 
     public void DisableAllPowers(Block block)
     {
-        block.SetLevel(0);
+        // block.SetLevel(0);
         block.ClearPowers();
         
-        if (!Datas.ContainsKey(block.myOwnIndex))
+        if (!Datas.ContainsKey(block.MyOwnIndex))
             return;
 
-        foreach (var powerName in new List<string>(Datas[block.myOwnIndex].Keys))
+        foreach (var powerName in new List<string>(Datas[block.MyOwnIndex].Keys))
             DisablePower(block, powerName);
-        Datas.Remove(block.myOwnIndex);
+        Datas.Remove(block.MyOwnIndex);
     }
 
     private void DisablePower(Block block, string powerName)
@@ -260,7 +257,6 @@ public class PowerManager
 
             var block = Blocks[couple.id];
             DisablePower(block, couple.nom);
-            block.SetLevel(0);
         }
     }
 }

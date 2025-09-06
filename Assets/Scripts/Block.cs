@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
@@ -9,15 +10,26 @@ public class Block : MonoBehaviour
     // Données propres au bloc
     public HashSet<int> NeighborsIndexes = new();
 
-    public int myOwnIndex = -1;
-    
+    private int _index = -1;
+
+    public int MyOwnIndex
+    {
+        get => _index;
+        set
+        {
+            if (_index != -1)
+                throw new InvalidOperationException("My own index ne peut être modifié qu'une seule fois !");
+            _index = value;
+        }
+    }
+
     private MeshRenderer mr;
-    
+
     [HideInInspector]
     public GameObject Content;
 
     public List<string> Powers = new();
-    
+
     [HideInInspector]
     public string PowerDisplay = string.Empty;
 
@@ -40,7 +52,7 @@ public class Block : MonoBehaviour
         get;
         private set;
     } = -1;
-    
+
     public int MoveRange
     {
         get;
@@ -52,7 +64,7 @@ public class Block : MonoBehaviour
         get;
         private set;
     } = 1;
-    
+
     public bool CanColor
     {
         get;
@@ -127,6 +139,15 @@ public class Block : MonoBehaviour
         return extendedNeighbors;
     }
 
+    public HashSet<Block> GetExtendedNeighbors(int moveRange)
+    {
+        int previousValue = MoveRange;
+        MoveRange = moveRange;
+        var extendedNeighbors = GetExtendedNeighbors();
+        MoveRange = previousValue;
+        return new HashSet<Block>(extendedNeighbors.Select(id => Blocks[id]));
+    }
+
 
 
     // States
@@ -135,7 +156,7 @@ public class Block : MonoBehaviour
     public bool IsCircled() => !NeighborsIndexes.Any(nId => GameManager.terrainManager.Blocks[nId].IsEmpty());
 
     public bool HasNeighbor(int blockId, int moveRange) => NeighborsIndexes.Contains(blockId) ||
-        (moveRange > 1 && NeighborsIndexes.Any(i => Blocks[i].HasNeighbor(blockId, moveRange - 1)));    
+        (moveRange > 1 && NeighborsIndexes.Any(i => Blocks[i].HasNeighbor(blockId, moveRange - 1)));
 
     public bool IsCurrentlyPlayable() => !Powers.Contains("Bouclier") || Powers.Contains("Bouclier" + GameManager.Instance.CurrentPlayerId);
 
@@ -156,6 +177,12 @@ public class Block : MonoBehaviour
     private void OnMouseDown()
     {
         if (Active)
-        GameManager.Instance.OnBlockDown(this);
+            GameManager.Instance.OnBlockDown(this);
     }
+
+    // Overrides
+
+    public override bool Equals(object obj) => obj is Block block && MyOwnIndex == block.MyOwnIndex;
+
+    public override int GetHashCode() => MyOwnIndex.GetHashCode();
 }

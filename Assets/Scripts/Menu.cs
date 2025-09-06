@@ -68,9 +68,13 @@ public class Menu : MonoBehaviour
         width.transform.parent.gameObject.SetActive(TerrainManager.nb_players != 3);
         height.transform.parent.gameObject.SetActive(TerrainManager.nb_players != 3);
         ray.transform.parent.gameObject.SetActive(TerrainManager.nb_players == 3);
-        width.transform.parent.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"Largeur : {width.value}";
-        height.transform.parent.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"Longueur : {height.value}";
-        ray.transform.parent.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"Rayon : {ray.value}";
+        nb_players.transform.parent.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"Nb Joueurs : {TerrainManager.nb_players}";
+        width.transform.parent.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"Largeur : {TerrainManager.terrainSize.x}";
+        height.transform.parent.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"Longueur : {TerrainManager.terrainSize.y}";
+        ray.transform.parent.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"Rayon : {TerrainManager.terrainRay}";
+        TerrainManager.terrainSize.x = (int)width.value;
+        TerrainManager.terrainSize.y = (int)height.value;
+        TerrainManager.terrainRay = (int)ray.value;
     }
 
     public void OpenScene(string name) => SceneManager.LoadScene(name);
