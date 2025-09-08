@@ -22,8 +22,6 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private Transform PlayerUIsParent;
     [SerializeField]
-    private Image NextButtonImage;
-    [SerializeField]
     private TextMeshProUGUI TextMeshMessage;
     [SerializeField]
     private Transform EndPanel;
@@ -111,7 +109,6 @@ public class UIManager : MonoBehaviour
     public void ShowPlayerUI()
     {
         var CurrPlayer = GameManager.Instance.CurrentPlayerId;
-        NextButtonImage.color = DataManager.GetColors()[CurrPlayer].color;
 
         for (int i = 0; i < TerrainManager.nb_players; i++)
         {
@@ -136,13 +133,17 @@ public class UIManager : MonoBehaviour
     {
         GameManager.Instance.PauseGameState();
         ShowPowers(false);
-        // Afficher le message à l'utilisateur
-        Debug.Log($"Message to Player: {message}");
+
+        TextMeshMessage.transform.parent.gameObject.SetActive(true);
         TextMeshMessage.text = message;
         TextMeshMessage.color = DataManager.GetColors()[GameManager.Instance.CurrentPlayerId].color;
     }
 
-    public void ClearMessage() => TextMeshMessage.text = string.Empty;
+    public void ClearMessage()
+    {
+        TextMeshMessage.text = string.Empty;
+        TextMeshMessage.transform.parent.gameObject.SetActive(false);
+    }
 
     public void ShowBlockLevel(Block block)
     {
@@ -184,24 +185,21 @@ public class UIManager : MonoBehaviour
             normalPower = hasAtLeastOneNotCircled && nbBlocks > 1 && energy >= requiredEnergy;
 
             if (t.name == "Domination")
-                shouldShow = typePower //&& DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant
-                ;
+                shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant;
 
             else if (t.name == "Contagion")
-                shouldShow = typePower && //DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant &&
+                shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant &&
                 Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => Blocks[blockId].IsOpponent() && Blocks[blockId].IsCurrentlyPlayable());
 
             else if (t.name == "Téléportation")
-                shouldShow = typePower && //DataManager.GetPawnTypes()[currPlayer] == PawnType.Voyageur &&
+                shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Voyageur &&
                 Blocks.Any(block => block.IsEmpty() && block.IsCurrentlyPlayable());
 
             else if (t.name == "Bouclier")
-                shouldShow = typePower //&& DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien
-                ;
+                shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien;
 
             else if (t.name == "Combo")
-                shouldShow = typePower //&& DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien
-                ;
+                shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien;
 
             else
                 shouldShow = normalPower;

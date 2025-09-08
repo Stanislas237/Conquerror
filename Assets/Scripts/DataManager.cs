@@ -11,17 +11,17 @@ public class DataManager
     public static Material normalColor;
     public static Material specialSelectionColor;
 
-    private static readonly Dictionary<string, object> PlayerDatas = new();
+    private static readonly Dictionary<string, object> PlayerDatas = new()
+    {
+        {"PawnTypes", new PawnType[4] { PawnType.Conquerant, PawnType.Voyageur, PawnType.Gardien, PawnType.Archiviste }}
+    };
 
     public DataManager()
     {
-        PlayerDatas.TryAdd("PawnTypes", new PawnType[4] { PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant });
         PlayerDatas["playersPositions"] = new HashSet<int>[4] { new(), new(), new(), new() };
         PlayerDatas["conquerPoints"] = new int[4];
         PlayerDatas["Energy"] = new int[4];
         PlayerDatas["nbTurnToPass"] = new int[4];
-        PlayerDatas["nbUseOfContagion"] = new int[4];
-        PlayerDatas["nbUseOfCombo"] = new int[4];
         
         if (Instance == null)
         {
@@ -33,6 +33,8 @@ public class DataManager
 
         Instance = this;
     }
+
+    // Getters
 
     public static HashSet<int> GetPositions(int i) => ((HashSet<int>[])PlayerDatas["playersPositions"])[i];
     public static HashSet<int> GetPositions() => GetPositions(GameManager.Instance.CurrentPlayerId);
@@ -60,8 +62,6 @@ public class DataManager
         return maxIndex;
     }
 
-    // Getters
-
     public static PawnType[] GetPawnTypes() => (PawnType[])PlayerDatas["PawnTypes"];
 
     public static int[] GetPassTurns() => (int[])PlayerDatas["nbTurnToPass"];
@@ -81,11 +81,7 @@ public class DataManager
 
     // Setters
 
-    public static void SetPawnType(int i, PawnType pawnType)
-    {
-        PlayerDatas["PawnTypes"] ??= new PawnType[4] { PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant, PawnType.Conquerant };
-        GetPawnTypes()[i] = pawnType;
-    }
+    public static void SetPawnType(int i, PawnType pawnType) => GetPawnTypes()[i] = pawnType;
 }
 
-public enum PawnType { Conquerant, Voyageur, Gardien, Archiviste }
+public enum PawnType { Conquerant = 0, Voyageur = 1, Gardien = 2, Archiviste = 3 }

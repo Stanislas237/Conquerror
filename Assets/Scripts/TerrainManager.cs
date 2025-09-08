@@ -8,6 +8,12 @@ public class TerrainManager : MonoBehaviour
 
     public static int nb_players = 2;
 
+    public static string TerrainShape = "Rect";
+
+    public static string BlockShape = "Rect";
+
+    private GameObject PrefabToSpawn;
+
     public static bool alt_mode = false;
 
     public static bool simulateNeighbors = true;
@@ -18,15 +24,22 @@ public class TerrainManager : MonoBehaviour
 
     public void GenerateBlocks()
     {
-        switch (nb_players)
+        PrefabToSpawn = BlockShape switch
         {
-            case 2:
+            "Hexa" => transform.GetChild(1).gameObject,
+            "Circle" => transform.GetChild(2).gameObject,
+            _ => transform.GetChild(0).gameObject,
+        };
+
+        switch (TerrainShape)
+        {
+            case "Rect":
                 GenerateRectangle();
                 break;
-            case 3:
+            case "Hexa":
                 GenerateHexagon();
                 break;
-            case 4:
+            case "Plus":
                 GeneratePlus();
                 break;
         }
@@ -73,7 +86,6 @@ public class TerrainManager : MonoBehaviour
 
     private void GenerateRectangle()
     {
-        GameObject PrefabToSpawn = transform.GetChild(0).gameObject;
         int X = 5 * terrainSize.x, Y = 5 * terrainSize.y;
         int maxSize = terrainSize.x * terrainSize.y;
 
@@ -113,7 +125,6 @@ public class TerrainManager : MonoBehaviour
 
     private void GenerateHexagon()
     {
-        GameObject PrefabToSpawn = transform.GetChild(1).gameObject;
         terrainSize = Vector2Int.one * (2 * terrainRay + 1);
         int R = 10 * terrainRay;
         int maxSize = 1 + 3 * terrainRay * (terrainRay + 1);
@@ -175,7 +186,6 @@ public class TerrainManager : MonoBehaviour
 
     private void GeneratePlus()
     {
-        GameObject PrefabToSpawn = transform.GetChild(0).gameObject;
         int X = 5 * terrainSize.x, Y = 5 * terrainSize.y;
 
         int minBound = Mathf.Min(terrainSize.x, terrainSize.y);
