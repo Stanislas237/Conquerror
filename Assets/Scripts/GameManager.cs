@@ -162,6 +162,7 @@ public class GameManager : MonoBehaviour
         DataManager.GetPositions(block.OwnerId).Remove(block.MyOwnIndex);
         PowerManager.Instance.DisableAllPowers(block);
         block.SetOwnerId(-1);
+        block.SetLevel(0);
         block.Content.SetActive(false);
     }
 
@@ -215,7 +216,8 @@ public class GameManager : MonoBehaviour
         SelectedBlocks.Clear();
 
         for (int i = 0; i < tempList.Count; i++)
-            Select(Blocks[tempList[i]]);
+            Select(Blocks[tempList[i]], false);
+        terrainManager.Draw();        
     }
 
     private void UnSelect()
@@ -224,7 +226,7 @@ public class GameManager : MonoBehaviour
         terrainManager.Draw();
     }
 
-    private void Select(Block block)
+    private void Select(Block block, bool reDraw = true)
     {
         if (SelectedBlocks.Contains(block.MyOwnIndex))
             UnSelect(block);
@@ -234,7 +236,9 @@ public class GameManager : MonoBehaviour
                 SelectedBlocks.Clear();
             SelectedBlocks.Add(block.MyOwnIndex);
         }
-        terrainManager.Draw();
+
+        if (reDraw)
+            terrainManager.Draw();
     }
 
     public async Task Fusion(string powerName)

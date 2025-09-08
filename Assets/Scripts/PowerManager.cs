@@ -54,7 +54,7 @@ public class PowerManager
                 UIManager.Instance.AskMessageToPlayer($"Déplacement étendu de rayon {Level + 1} activé.");
 
                 block.PowerDisplay = "Mouvement";
-                var targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(block.GetExtendedNeighbors(Level + 1));
+                var targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(block.GetExtendedNeighbors(Level + 1).Where(b => b.IsEmpty() && b.IsCurrentlyPlayable()));
                 Conquer?.Invoke(targetBlock, true);
 
                 await Task.Yield();
@@ -79,6 +79,7 @@ public class PowerManager
                 break;
 
             case "Domination":
+                Level++;
                 foreach (var neighborBlock in block.GetExtendedNeighbors(Level))
                     if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
                     {
@@ -91,6 +92,7 @@ public class PowerManager
                 break;
 
             case "Contagion":
+                Level++;
                 UIManager.Instance.AskMessageToPlayer($"Sélectionnez un bloc ennemi dans un rayon de {Level} pour le contaminer.");
 
                 targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(block.GetExtendedNeighbors(Level).Where(b => b.IsOpponent() && b.IsCurrentlyPlayable()));
@@ -119,10 +121,12 @@ public class PowerManager
                 // Téléportation
                 DisableAllPowers(targetBlock);
                 Conquer?.Invoke(targetBlock, false);
+                targetBlock.SetLevel(Level);
                 Free?.Invoke(block);
                 break;
 
             case "Bouclier":
+                Level++;
                 TotalTurnsForCombo += nbTours = 3;
                 block.PowerDisplay = "BouclierDeZone";
 
@@ -136,6 +140,7 @@ public class PowerManager
                 break;
 
             case "Combo":
+                Level++;
                 TeleportedAt = null;
                 TotalTurnsForCombo = 0;
 
