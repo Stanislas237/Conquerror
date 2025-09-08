@@ -71,7 +71,7 @@ public class PowerManager
                 break;
 
             case "Artefact":
-                foreach (var neighborBlock in block.GetExtendedNeighbors(Level + 1))
+                foreach (var neighborBlock in block.GetExtendedNeighbors(Level))
                     if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
                         Free?.Invoke(neighborBlock);
 
@@ -80,6 +80,8 @@ public class PowerManager
 
             case "Domination":
                 Level++;
+                DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId] = 0;
+
                 foreach (var neighborBlock in block.GetExtendedNeighbors(Level))
                     if (neighborBlock.IsOpponent() && neighborBlock.IsCurrentlyPlayable())
                     {
@@ -93,6 +95,7 @@ public class PowerManager
 
             case "Contagion":
                 Level++;
+                DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId] = 0;
                 UIManager.Instance.AskMessageToPlayer($"Sélectionnez un bloc ennemi dans un rayon de {Level} pour le contaminer.");
 
                 targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(block.GetExtendedNeighbors(Level).Where(b => b.IsOpponent() && b.IsCurrentlyPlayable()));
@@ -114,6 +117,7 @@ public class PowerManager
                 break;
 
             case "Téléportation":
+                DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId] = 0;
                 UIManager.Instance.AskMessageToPlayer("Sélectionnez un bloc vide où se téléporter.");
                 targetBlock = await GameManager.Instance.WaitForBlockSelectionAsync(Blocks.Where(block => block.IsEmpty() && block.IsCurrentlyPlayable()));
                 TeleportedAt = targetBlock;
@@ -127,6 +131,7 @@ public class PowerManager
 
             case "Bouclier":
                 Level++;
+                DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId] = 0;
                 TotalTurnsForCombo += nbTours = 3;
                 block.PowerDisplay = "BouclierDeZone";
 
@@ -141,6 +146,7 @@ public class PowerManager
 
             case "Combo":
                 Level++;
+                DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId] = 0;
                 TeleportedAt = null;
                 TotalTurnsForCombo = 0;
 
