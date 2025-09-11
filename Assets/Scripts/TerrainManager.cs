@@ -94,7 +94,7 @@ public class TerrainManager : MonoBehaviour
         for (int i = -X; i < X; i += 10)
             for (int j = -Y; j < Y; j += 10)
             {
-                var obj = Instantiate(PrefabToSpawn, new(i + 5, 1, j + 5), Quaternion.identity, transform);
+                var obj = Instantiate(PrefabToSpawn, new(i + 5, 1, j + 5), PrefabToSpawn.transform.rotation, transform);
                 obj.SetActive(true);
                 obj.name = $"({i}, {j})";
                 var block = obj.AddComponent<Block>();
@@ -209,7 +209,7 @@ public class TerrainManager : MonoBehaviour
             {
                 if ((i + X < thresoldX || i + X >= thresoldX + thickness) && (j + Y < thresoldY || j + Y >= thresoldY + thickness)) continue;
 
-                var obj = Instantiate(PrefabToSpawn, new(i + 5, 1, j + 5), Quaternion.identity, transform);
+                var obj = Instantiate(PrefabToSpawn, new(i + 5, 1, j + 5), PrefabToSpawn.transform.rotation, transform);
                 obj.SetActive(true);
                 obj.name = $"({i}, {j})";
                 var block = obj.AddComponent<Block>();

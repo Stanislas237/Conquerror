@@ -27,10 +27,11 @@ public class RTSCameraController : MonoBehaviour
 
     void Update()
     {
-        HandleTouchInput();
+        if (HandleTouchInput())
+            UIManager.Instance.RefreshLevels();
     }
 
-    void HandleTouchInput()
+    bool HandleTouchInput()
     {
         int count = Input.touchCount;
 
@@ -66,6 +67,8 @@ public class RTSCameraController : MonoBehaviour
                     transform.eulerAngles = currentRotation;
                 }
             }
+
+            return touch.deltaPosition != Vector2.zero;
         }
         else if (count == 2)
         {
@@ -79,15 +82,18 @@ public class RTSCameraController : MonoBehaviour
                 if (lastPinchDistance > 0f)
                 {
                     float delta = currentDistance - lastPinchDistance;
-                    ZoomCamera(-delta * zoomSpeed); // distance ↑ → dézoome ; ↓ → zoome
+                    ZoomCamera(-delta * zoomSpeed);
                 }
 
                 lastPinchDistance = currentDistance;
             }
+
+            return t0.phase == TouchPhase.Ended || t1.phase == TouchPhase.Ended;
         }
         else
         {
             lastPinchDistance = 0f;
+            return false;
         }
     }
 

@@ -1057,6 +1057,7 @@ GameObject:
   - component: {fileID: 245213159}
   - component: {fileID: 245213158}
   - component: {fileID: 245213157}
+  - component: {fileID: 245213160}
   m_Layer: 5
   m_Name: Mouvement
   m_TagString: Untagged
@@ -1166,6 +1167,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 245213155}
   m_CullTransparentMesh: 1
+--- !u!114 &245213160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 245213155}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &258196802
 GameObject:
   m_ObjectHideFlags: 0
@@ -1509,6 +1522,7 @@ GameObject:
   - component: {fileID: 300521034}
   - component: {fileID: 300521033}
   - component: {fileID: 300521032}
+  - component: {fileID: 300521035}
   m_Layer: 5
   m_Name: Contagion
   m_TagString: Untagged
@@ -1618,6 +1632,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 300521030}
   m_CullTransparentMesh: 1
+--- !u!114 &300521035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 300521030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &303123025
 GameObject:
   m_ObjectHideFlags: 0
@@ -1851,6 +1877,7 @@ GameObject:
   - component: {fileID: 354596633}
   - component: {fileID: 354596632}
   - component: {fileID: 354596631}
+  - component: {fileID: 354596634}
   m_Layer: 5
   m_Name: Bouclier
   m_TagString: Untagged
@@ -1960,6 +1987,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 354596629}
   m_CullTransparentMesh: 1
+--- !u!114 &354596634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354596629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &354790680
 GameObject:
   m_ObjectHideFlags: 0
@@ -5102,6 +5141,7 @@ GameObject:
   - component: {fileID: 1022530084}
   - component: {fileID: 1022530083}
   - component: {fileID: 1022530082}
+  - component: {fileID: 1022530085}
   m_Layer: 5
   m_Name: Domination
   m_TagString: Untagged
@@ -5211,6 +5251,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1022530080}
   m_CullTransparentMesh: 1
+--- !u!114 &1022530085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1022530080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1032148954
 GameObject:
   m_ObjectHideFlags: 0
@@ -5272,7 +5324,7 @@ MonoBehaviour:
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
-  m_FillCenter: 0
+  m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
@@ -5299,6 +5351,7 @@ GameObject:
   - component: {fileID: 1055004021}
   - component: {fileID: 1055004020}
   - component: {fileID: 1055004019}
+  - component: {fileID: 1055004022}
   m_Layer: 5
   m_Name: "T\xE9l\xE9portation"
   m_TagString: Untagged
@@ -5408,6 +5461,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1055004017}
   m_CullTransparentMesh: 1
+--- !u!114 &1055004022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1055004017}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1070270884
 GameObject:
   m_ObjectHideFlags: 0
@@ -5420,6 +5485,7 @@ GameObject:
   - component: {fileID: 1070270888}
   - component: {fileID: 1070270887}
   - component: {fileID: 1070270886}
+  - component: {fileID: 1070270889}
   m_Layer: 5
   m_Name: Defense
   m_TagString: Untagged
@@ -5529,6 +5595,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1070270884}
   m_CullTransparentMesh: 1
+--- !u!114 &1070270889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070270884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1071173721
 GameObject:
   m_ObjectHideFlags: 0
@@ -6014,6 +6092,7 @@ GameObject:
   - component: {fileID: 1188226104}
   - component: {fileID: 1188226103}
   - component: {fileID: 1188226102}
+  - component: {fileID: 1188226105}
   m_Layer: 5
   m_Name: Attaque
   m_TagString: Untagged
@@ -6123,6 +6202,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1188226100}
   m_CullTransparentMesh: 1
+--- !u!114 &1188226105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1188226100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1197610348
 GameObject:
   m_ObjectHideFlags: 0
@@ -6224,7 +6315,7 @@ MonoBehaviour:
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
-  m_FillCenter: 0
+  m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
@@ -7575,7 +7666,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 40.18, y: -33.055}
+  m_AnchoredPosition: {x: 40.179993, y: -33.055}
   m_SizeDelta: {x: 0, y: 66.11}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1534013402
@@ -7773,6 +7864,7 @@ GameObject:
   - component: {fileID: 1579344715}
   - component: {fileID: 1579344714}
   - component: {fileID: 1579344713}
+  - component: {fileID: 1579344716}
   m_Layer: 5
   m_Name: Artefact
   m_TagString: Untagged
@@ -7882,6 +7974,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1579344711}
   m_CullTransparentMesh: 1
+--- !u!114 &1579344716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579344711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1583843161
 GameObject:
   m_ObjectHideFlags: 0
@@ -8898,6 +9002,7 @@ GameObject:
   - component: {fileID: 1856188447}
   - component: {fileID: 1856188446}
   - component: {fileID: 1856188445}
+  - component: {fileID: 1856188448}
   m_Layer: 5
   m_Name: Combo
   m_TagString: Untagged
@@ -9007,6 +9112,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1856188443}
   m_CullTransparentMesh: 1
+--- !u!114 &1856188448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1856188443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a71ed199ec67bff4ea810f9db617daa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1864879172
 GameObject:
   m_ObjectHideFlags: 0
@@ -9293,7 +9410,7 @@ MonoBehaviour:
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
-  m_FillCenter: 0
+  m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
@@ -10365,7 +10482,7 @@ MonoBehaviour:
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
-  m_FillCenter: 0
+  m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1

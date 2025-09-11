@@ -125,7 +125,7 @@ public class PowerManager
                 // Téléportation
                 DisableAllPowers(targetBlock);
                 Conquer?.Invoke(targetBlock, false);
-                targetBlock.SetLevel(Level);
+                targetBlock.SetLevel(block.Level);
                 Free?.Invoke(block);
                 break;
 
@@ -145,7 +145,6 @@ public class PowerManager
                 break;
 
             case "Combo":
-                Level++;
                 DataManager.GetConquerPoints()[GameManager.Instance.CurrentPlayerId] = 0;
                 TeleportedAt = null;
                 TotalTurnsForCombo = 0;

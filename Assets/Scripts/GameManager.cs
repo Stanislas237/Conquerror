@@ -194,8 +194,8 @@ public class GameManager : MonoBehaviour
             PowerManager.Instance.DisableAllPowers(block);
             DataManager.GetPositions().Add(block.MyOwnIndex);
             block.SetOwnerId(CurrentPlayerId);
+            DataManager.GetConquerPoints()[CurrentPlayerId]++;
         }
-        DataManager.GetConquerPoints()[CurrentPlayerId]++;
 
         if (recursive > 0)
             foreach (var blockId in block.NeighborsIndexes)

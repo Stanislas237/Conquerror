@@ -63,6 +63,9 @@ public class UIManager : MonoBehaviour
             ui.GetChild(1).GetChild(1).GetComponent<Image>().color = color;
             text.color = p_text.color = color;
             text.text = $"Player {i + 1}";
+            
+            // Icon
+            ui.GetChild(0).GetChild(0).GetComponent<Image>().sprite = DataManager.GetPawnTypesSprites()[(int)DataManager.GetPawnTypes()[i]];
         }
         ShowPlayerUI();
 
@@ -180,16 +183,15 @@ public class UIManager : MonoBehaviour
 
         foreach (Transform t in PowersParent)
         {
-            bool shouldShow = true,
-            typePower = nbBlocks == 1 && DataManager.GetConquerPoints()[currPlayer] >= DataManager.requiredConquerPointsForSpecial,
-            normalPower = hasAtLeastOneNotCircled && nbBlocks > 1 && energy >= requiredEnergy;
+            bool shouldShow, normalPower = hasAtLeastOneNotCircled && nbBlocks > 1 && energy >= requiredEnergy,
+            typePower = nbBlocks == 1 && DataManager.GetConquerPoints()[currPlayer] >= DataManager.requiredConquerPointsForSpecial;
 
             if (t.name == "Domination")
                 shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant;
 
             else if (t.name == "Contagion")
                 shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Conquerant &&
-                Blocks[GameManager.Instance.SelectedBlocks.Last()].NeighborsIndexes.Any(blockId => Blocks[blockId].IsOpponent() && Blocks[blockId].IsCurrentlyPlayable());
+                Blocks[GameManager.Instance.SelectedBlocks.Last()].GetExtendedNeighborsByLevel().Any(block => block.IsOpponent() && block.IsCurrentlyPlayable());
 
             else if (t.name == "Téléportation")
                 shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Voyageur &&
@@ -199,7 +201,7 @@ public class UIManager : MonoBehaviour
                 shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien;
 
             else if (t.name == "Combo")
-                shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Gardien;
+                shouldShow = typePower && DataManager.GetPawnTypes()[currPlayer] == PawnType.Archiviste;
 
             else
                 shouldShow = normalPower;

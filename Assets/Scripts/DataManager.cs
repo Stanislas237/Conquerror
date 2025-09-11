@@ -29,6 +29,12 @@ public class DataManager
             PlayerDatas["PlayerHoverColors"] = Resources.LoadAll<Material>("Materials/PlayerHovers");
             normalColor = Resources.Load<Material>("Materials/Block");
             specialSelectionColor = Resources.Load<Material>("Materials/Terrain");
+
+            PlayerDatas["PawnTypesSprites"] = new Sprite[4];
+            SetPawnTypeSprite(0, Resources.Load<Sprite>("Sprites/PawnTypes/attack"));
+            SetPawnTypeSprite(1, Resources.Load<Sprite>("Sprites/PawnTypes/explorer"));
+            SetPawnTypeSprite(2, Resources.Load<Sprite>("Sprites/PawnTypes/defender"));
+            SetPawnTypeSprite(3, Resources.Load<Sprite>("Sprites/PawnTypes/archiviste"));
         }
 
         Instance = this;
@@ -62,6 +68,8 @@ public class DataManager
         return maxIndex;
     }
 
+    public static Sprite[] GetPawnTypesSprites() => (Sprite[])PlayerDatas["PawnTypesSprites"];
+
     public static PawnType[] GetPawnTypes() => (PawnType[])PlayerDatas["PawnTypes"];
 
     public static int[] GetPassTurns() => (int[])PlayerDatas["nbTurnToPass"];
@@ -82,6 +90,8 @@ public class DataManager
     // Setters
 
     public static void SetPawnType(int i, PawnType pawnType) => GetPawnTypes()[i] = pawnType;
+
+    public static void SetPawnTypeSprite(int i, Sprite sprite) => GetPawnTypesSprites()[i] = sprite;
 }
 
 public enum PawnType { Conquerant = 0, Voyageur = 1, Gardien = 2, Archiviste = 3 }

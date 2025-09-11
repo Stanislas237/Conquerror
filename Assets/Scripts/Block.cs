@@ -151,6 +151,7 @@ public class Block : MonoBehaviour
         return new HashSet<Block>(extendedNeighbors.Select(id => Blocks[id]));
     }
 
+    public HashSet<Block> GetExtendedNeighborsByLevel() => GetExtendedNeighbors(Level + 1);
 
 
     // States
